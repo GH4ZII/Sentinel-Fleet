@@ -4,7 +4,10 @@ using Microsoft.EntityFrameworkCore;
 using Serilog;
 using SentinelFleet.Infrastructure;
 using SentinelFleet.Infrastructure.Persistence;
+using SentinelFleet.Modules.Assets;
+using SentinelFleet.Modules.Devices;
 using SentinelFleet.Modules.Identity;
+using SentinelFleet.Modules.Organizations;
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
@@ -22,6 +25,11 @@ try
         .WriteTo.Console());
 
     builder.Services.AddInfrastructure(builder.Configuration);
+    builder.Services.ConfigureHttpJsonOptions(options =>
+    {
+        options.SerializerOptions.Converters.Add(
+            new System.Text.Json.Serialization.JsonStringEnumConverter());
+    });
     builder.Services.AddOpenApi();
 
     builder.Services.AddCors(options =>
@@ -56,7 +64,6 @@ try
         app.MapOpenApi();
     }
 
-    // HTTPS redirection is skipped in containerized HTTP-only local setups.
     if (!app.Environment.IsEnvironment("Docker"))
     {
         app.UseHttpsRedirection();
@@ -65,13 +72,11 @@ try
     app.UseAuthentication();
     app.UseAuthorization();
 
-    // Liveness: process is up (no dependency checks).
     app.MapHealthChecks("/health/live", new HealthCheckOptions
     {
         Predicate = _ => false
     });
 
-    // Combined / readiness: Postgres, Redis, RabbitMQ.
     app.MapHealthChecks("/health", new HealthCheckOptions
     {
         Predicate = _ => true
@@ -101,6 +106,9 @@ try
     .WithName("GetStatus");
 
     app.MapIdentityEndpoints();
+    app.MapOrganizationEndpoints();
+    app.MapAssetEndpoints();
+    app.MapDeviceEndpoints();
 
     app.Run();
 }

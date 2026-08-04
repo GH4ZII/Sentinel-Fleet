@@ -1,6 +1,6 @@
 ﻿namespace SentinelFleet.Modules.Devices;
 
 /// <summary>
-/// Marker type for the Devices module. Implementation arrives in later weeks.
+/// Marker type for the Devices module.
 /// </summary>
 public static class ModuleMarker;

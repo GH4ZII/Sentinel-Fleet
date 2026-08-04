@@ -6,10 +6,18 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using RabbitMQ.Client;
+using SentinelFleet.Application.Assets;
+using SentinelFleet.Application.Devices;
 using SentinelFleet.Application.Identity;
+using SentinelFleet.Application.Organizations;
+using SentinelFleet.Application.Security;
 using SentinelFleet.Domain.Identity;
+using SentinelFleet.Infrastructure.Assets;
+using SentinelFleet.Infrastructure.Devices;
 using SentinelFleet.Infrastructure.Identity;
+using SentinelFleet.Infrastructure.Organizations;
 using SentinelFleet.Infrastructure.Persistence;
+using SentinelFleet.Infrastructure.Security;
 
 namespace SentinelFleet.Infrastructure;
 
@@ -79,10 +87,15 @@ public static class DependencyInjection
             });
 
         services.AddAuthorization();
+        services.AddHttpContextAccessor();
 
         services.AddSingleton<PasswordHasher<User>>();
         services.AddSingleton<IJwtTokenService, JwtTokenService>();
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IOrganizationContext, OrganizationContext>();
+        services.AddScoped<IOrganizationService, OrganizationService>();
+        services.AddScoped<IAssetService, AssetService>();
+        services.AddScoped<IDeviceService, DeviceService>();
 
         services
             .AddHealthChecks()

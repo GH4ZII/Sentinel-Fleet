@@ -1,6 +1,8 @@
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.Extensions.Options;
+using SentinelFleet.Application.Security;
 using SentinelFleet.Domain.Identity;
+using SentinelFleet.Domain.Organizations;
 using SentinelFleet.Infrastructure.Identity;
 
 namespace SentinelFleet.UnitTests.Identity;
@@ -28,8 +30,9 @@ public class JwtTokenServiceTests
             PasswordHash = "hash",
             CreatedAt = DateTimeOffset.UtcNow
         };
+        var orgId = Guid.Parse("22222222-2222-2222-2222-222222222222");
 
-        var (token, expiresAt) = _sut.CreateAccessToken(user);
+        var (token, expiresAt) = _sut.CreateAccessToken(user, orgId, OrganizationRole.Owner);
 
         Assert.False(string.IsNullOrWhiteSpace(token));
         Assert.True(expiresAt > DateTimeOffset.UtcNow);
@@ -38,6 +41,8 @@ public class JwtTokenServiceTests
         Assert.Equal(user.Id.ToString(), jwt.Subject);
         Assert.Equal(user.Email, jwt.Claims.First(c => c.Type == JwtRegisteredClaimNames.Email).Value);
         Assert.Equal("Ada Lovelace", jwt.Claims.First(c => c.Type == JwtRegisteredClaimNames.Name).Value);
+        Assert.Equal(orgId.ToString(), jwt.Claims.First(c => c.Type == AuthClaimTypes.OrganizationId).Value);
+        Assert.Equal(OrganizationRole.Owner.ToString(), jwt.Claims.First(c => c.Type == AuthClaimTypes.Role).Value);
         Assert.Equal("sentinel-fleet", jwt.Issuer);
         Assert.Contains("sentinel-fleet", jwt.Audiences);
     }

@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using SentinelFleet.Application.Identity;
+using SentinelFleet.Domain.Assets;
 using SentinelFleet.Domain.Identity;
+using SentinelFleet.Domain.Organizations;
 using SentinelFleet.Infrastructure.Persistence;
 
 namespace SentinelFleet.Infrastructure.Identity;
@@ -38,11 +40,45 @@ public sealed class AuthService(
             PasswordHash = string.Empty,
             CreatedAt = DateTimeOffset.UtcNow
         };
-
         user.PasswordHash = passwordHasher.HashPassword(user, request.Password);
 
+        var orgName = string.IsNullOrWhiteSpace(request.OrganizationName)
+            ? $"{user.FirstName}'s organization"
+            : request.OrganizationName.Trim();
+
+        var organization = new Organization
+        {
+            Id = Guid.NewGuid(),
+            Name = orgName,
+            CreatedAt = DateTimeOffset.UtcNow,
+            Settings = "{}"
+        };
+
+        var membership = new Membership
+        {
+            Id = Guid.NewGuid(),
+            OrganizationId = organization.Id,
+            UserId = user.Id,
+            Role = OrganizationRole.Owner,
+            Status = MembershipStatus.Active,
+            CreatedAt = DateTimeOffset.UtcNow
+        };
+
+        var defaultAssetType = new AssetType
+        {
+            Id = Guid.NewGuid(),
+            OrganizationId = organization.Id,
+            Name = "Kjøretøy",
+            Icon = "vehicle",
+            Description = "Default vehicle asset type"
+        };
+
         db.Users.Add(user);
-        var response = IssueTokens(user);
+        db.Organizations.Add(organization);
+        db.Memberships.Add(membership);
+        db.AssetTypes.Add(defaultAssetType);
+
+        var response = IssueTokens(user, organization.Id, OrganizationRole.Owner);
         await db.SaveChangesAsync(cancellationToken);
 
         return AuthResult<AuthResponse>.Success(response);
@@ -73,8 +109,15 @@ public sealed class AuthService(
                 new AuthError(AuthErrorCode.InvalidCredentials, "Invalid email or password."));
         }
 
+        var membership = await GetActiveMembershipAsync(user.Id, cancellationToken);
+        if (membership is null)
+        {
+            return AuthResult<AuthResponse>.Failure(
+                new AuthError(AuthErrorCode.Unauthorized, "User has no active organization membership."));
+        }
+
         user.LastLoginAt = DateTimeOffset.UtcNow;
-        var response = IssueTokens(user);
+        var response = IssueTokens(user, membership.OrganizationId, membership.Role);
         await db.SaveChangesAsync(cancellationToken);
 
         return AuthResult<AuthResponse>.Success(response);
@@ -101,6 +144,13 @@ public sealed class AuthService(
                 new AuthError(AuthErrorCode.Unauthorized, "Invalid or expired refresh token."));
         }
 
+        var membership = await GetActiveMembershipAsync(existing.UserId, cancellationToken);
+        if (membership is null)
+        {
+            return AuthResult<AuthResponse>.Failure(
+                new AuthError(AuthErrorCode.Unauthorized, "User has no active organization membership."));
+        }
+
         var (plaintext, tokenHash, expiresAt) = tokenService.CreateRefreshToken();
         var replacement = new RefreshToken
         {
@@ -113,14 +163,17 @@ public sealed class AuthService(
 
         existing.RevokedAt = DateTimeOffset.UtcNow;
         existing.ReplacedByTokenId = replacement.Id;
-
         db.RefreshTokens.Add(replacement);
 
-        var (accessToken, accessExpiresAt) = tokenService.CreateAccessToken(existing.User);
+        var (accessToken, accessExpiresAt) = tokenService.CreateAccessToken(
+            existing.User,
+            membership.OrganizationId,
+            membership.Role);
+
         await db.SaveChangesAsync(cancellationToken);
 
         return AuthResult<AuthResponse>.Success(new AuthResponse(
-            ToDto(existing.User),
+            ToDto(existing.User, membership.OrganizationId, membership.Role),
             accessToken,
             plaintext,
             accessExpiresAt,
@@ -163,12 +216,25 @@ public sealed class AuthService(
                 new AuthError(AuthErrorCode.NotFound, "User not found."));
         }
 
-        return AuthResult<UserDto>.Success(ToDto(user));
+        var membership = await GetActiveMembershipAsync(userId, cancellationToken);
+        return AuthResult<UserDto>.Success(ToDto(
+            user,
+            membership?.OrganizationId,
+            membership?.Role));
     }
 
-    private AuthResponse IssueTokens(User user)
+    private async Task<Membership?> GetActiveMembershipAsync(Guid userId, CancellationToken cancellationToken)
     {
-        var (accessToken, accessExpiresAt) = tokenService.CreateAccessToken(user);
+        return await db.Memberships
+            .AsNoTracking()
+            .Where(m => m.UserId == userId && m.Status == MembershipStatus.Active)
+            .OrderBy(m => m.CreatedAt)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
+    private AuthResponse IssueTokens(User user, Guid organizationId, OrganizationRole role)
+    {
+        var (accessToken, accessExpiresAt) = tokenService.CreateAccessToken(user, organizationId, role);
         var (plaintext, tokenHash, refreshExpiresAt) = tokenService.CreateRefreshToken();
 
         db.RefreshTokens.Add(new RefreshToken
@@ -181,19 +247,21 @@ public sealed class AuthService(
         });
 
         return new AuthResponse(
-            ToDto(user),
+            ToDto(user, organizationId, role),
             accessToken,
             plaintext,
             accessExpiresAt,
             refreshExpiresAt);
     }
 
-    private static UserDto ToDto(User user) => new(
+    private static UserDto ToDto(User user, Guid? organizationId, OrganizationRole? role) => new(
         user.Id,
         user.Email,
         user.FirstName,
         user.LastName,
-        user.LastLoginAt);
+        user.LastLoginAt,
+        organizationId,
+        role?.ToString());
 
     private static string NormalizeEmail(string email) => email.Trim().ToLowerInvariant();
 

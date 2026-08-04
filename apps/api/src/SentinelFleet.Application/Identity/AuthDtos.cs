@@ -4,7 +4,8 @@ public sealed record RegisterRequest(
     string Email,
     string Password,
     string FirstName,
-    string LastName);
+    string LastName,
+    string? OrganizationName = null);
 
 public sealed record LoginRequest(
     string Email,
@@ -19,7 +20,9 @@ public sealed record UserDto(
     string Email,
     string FirstName,
     string LastName,
-    DateTimeOffset? LastLoginAt);
+    DateTimeOffset? LastLoginAt,
+    Guid? OrganizationId = null,
+    string? OrganizationRole = null);
 
 public sealed record AuthResponse(
     UserDto User,

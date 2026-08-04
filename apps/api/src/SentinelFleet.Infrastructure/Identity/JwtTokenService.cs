@@ -5,7 +5,9 @@ using System.Text;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using SentinelFleet.Application.Identity;
+using SentinelFleet.Application.Security;
 using SentinelFleet.Domain.Identity;
+using SentinelFleet.Domain.Organizations;
 
 namespace SentinelFleet.Infrastructure.Identity;
 
@@ -13,7 +15,10 @@ public sealed class JwtTokenService(IOptions<JwtOptions> options) : IJwtTokenSer
 {
     private readonly JwtOptions _options = options.Value;
 
-    public (string Token, DateTimeOffset ExpiresAt) CreateAccessToken(User user)
+    public (string Token, DateTimeOffset ExpiresAt) CreateAccessToken(
+        User user,
+        Guid organizationId,
+        OrganizationRole role)
     {
         var expiresAt = DateTimeOffset.UtcNow.AddMinutes(_options.AccessTokenMinutes);
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.SigningKey));
@@ -24,7 +29,10 @@ public sealed class JwtTokenService(IOptions<JwtOptions> options) : IJwtTokenSer
             new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
             new(JwtRegisteredClaimNames.Email, user.Email),
             new(JwtRegisteredClaimNames.Name, $"{user.FirstName} {user.LastName}".Trim()),
-            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
+            new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new(AuthClaimTypes.OrganizationId, organizationId.ToString()),
+            new(AuthClaimTypes.Role, role.ToString()),
+            new(ClaimTypes.Role, role.ToString())
         };
 
         var token = new JwtSecurityToken(
