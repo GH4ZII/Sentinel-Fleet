@@ -1,0 +1,79 @@
+## .NET
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+[Bb]uild/
+[Dd]ebug/
+[Rr]elease/
+*.dll
+*.exe
+*.pdb
+*.cache
+project.lock.json
+project.fragment.lock.json
+artifacts/
+*.nupkg
+*.snupkg
+.vs/
+.idea/
+*.DotSettings.user
+
+## Node / frontend
+node_modules/
+dist/
+dist-ssr/
+*.local
+.npm
+.yarn/
+coverage/
+*.tsbuildinfo
+
+## Environment / secrets
+.env
+.env.local
+.env.*.local
+!.env.example
+secrets/
+*.pfx
+*.pem
+!*.pem.example
+
+## Docker
+docker-data/
+
+## OS / IDE
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.swp
+*~
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+## Logs / temp
+logs/
+*.log
+tmp/
+temp/
+
+## Test results
+TestResults/
+coverage/
+*.trx
+*.coverage
+*.coveragexml
+
+## Terraform
+**/.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+.terraformrc
+terraform.rc

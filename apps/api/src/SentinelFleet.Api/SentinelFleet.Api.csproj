@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.1" />
+    <PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
+    <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SentinelFleet.Application\SentinelFleet.Application.csproj" />
+    <ProjectReference Include="..\SentinelFleet.Infrastructure\SentinelFleet.Infrastructure.csproj" />
+    <ProjectReference Include="..\SentinelFleet.Domain\SentinelFleet.Domain.csproj" />
+    <ProjectReference Include="..\SentinelFleet.Modules\Identity\SentinelFleet.Modules.Identity.csproj" />
+    <ProjectReference Include="..\SentinelFleet.Modules\Organizations\SentinelFleet.Modules.Organizations.csproj" />
+    <ProjectReference Include="..\SentinelFleet.Modules\Assets\SentinelFleet.Modules.Assets.csproj" />
+    <ProjectReference Include="..\SentinelFleet.Modules\Devices\SentinelFleet.Modules.Devices.csproj" />
+    <ProjectReference Include="..\SentinelFleet.Modules\Telemetry\SentinelFleet.Modules.Telemetry.csproj" />
+    <ProjectReference Include="..\SentinelFleet.Modules\Geofences\SentinelFleet.Modules.Geofences.csproj" />
+    <ProjectReference Include="..\SentinelFleet.Modules\Rules\SentinelFleet.Modules.Rules.csproj" />
+    <ProjectReference Include="..\SentinelFleet.Modules\Detections\SentinelFleet.Modules.Detections.csproj" />
+    <ProjectReference Include="..\SentinelFleet.Modules\Incidents\SentinelFleet.Modules.Incidents.csproj" />
+    <ProjectReference Include="..\SentinelFleet.Modules\RiskScoring\SentinelFleet.Modules.RiskScoring.csproj" />
+    <ProjectReference Include="..\SentinelFleet.Modules\AIAnalysis\SentinelFleet.Modules.AIAnalysis.csproj" />
+    <ProjectReference Include="..\SentinelFleet.Modules\Audit\SentinelFleet.Modules.Audit.csproj" />
+  </ItemGroup>
+
+</Project>
