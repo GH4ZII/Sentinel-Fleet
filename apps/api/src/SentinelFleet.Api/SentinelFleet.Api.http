@@ -1,6 +1,44 @@
-@SentinelFleet.Api_HostAddress = http://localhost:5032
+@host = http://localhost:8081
 
-GET {{SentinelFleet.Api_HostAddress}}/weatherforecast/
-Accept: application/json
+### Status
+GET {{host}}/api/v1/status
 
-###
+### Register
+POST {{host}}/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "email": "demo@example.com",
+  "password": "Password1!",
+  "firstName": "Demo",
+  "lastName": "User"
+}
+
+### Login
+POST {{host}}/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "demo@example.com",
+  "password": "Password1!"
+}
+
+### Me
+GET {{host}}/api/v1/auth/me
+Authorization: Bearer {{accessToken}}
+
+### Refresh
+POST {{host}}/api/v1/auth/refresh
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}
+
+### Logout
+POST {{host}}/api/v1/auth/logout
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshToken}}"
+}

@@ -1,7 +1,10 @@
 using System.Reflection;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.EntityFrameworkCore;
 using Serilog;
 using SentinelFleet.Infrastructure;
+using SentinelFleet.Infrastructure.Persistence;
+using SentinelFleet.Modules.Identity;
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
@@ -39,6 +42,12 @@ try
 
     var app = builder.Build();
 
+    await using (var scope = app.Services.CreateAsyncScope())
+    {
+        var db = scope.ServiceProvider.GetRequiredService<SentinelFleetDbContext>();
+        await db.Database.MigrateAsync();
+    }
+
     app.UseSerilogRequestLogging();
     app.UseCors("Frontend");
 
@@ -52,6 +61,9 @@ try
     {
         app.UseHttpsRedirection();
     }
+
+    app.UseAuthentication();
+    app.UseAuthorization();
 
     // Liveness: process is up (no dependency checks).
     app.MapHealthChecks("/health/live", new HealthCheckOptions
@@ -87,6 +99,8 @@ try
         });
     })
     .WithName("GetStatus");
+
+    app.MapIdentityEndpoints();
 
     app.Run();
 }

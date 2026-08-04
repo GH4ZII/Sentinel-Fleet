@@ -67,6 +67,9 @@ coverage/
 *.coverage
 *.coveragexml
 
+## Docs (local notes)
+docs/backend-layers.md
+
 ## Terraform
 **/.terraform/
 *.tfstate

@@ -1,7 +1,14 @@
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.IdentityModel.Tokens;
 using RabbitMQ.Client;
+using SentinelFleet.Application.Identity;
+using SentinelFleet.Domain.Identity;
+using SentinelFleet.Infrastructure.Identity;
 using SentinelFleet.Infrastructure.Persistence;
 
 namespace SentinelFleet.Infrastructure;
@@ -22,7 +29,9 @@ public static class DependencyInjection
             ?? throw new InvalidOperationException("Connection string 'RabbitMq' is not configured.");
 
         services.AddDbContext<SentinelFleetDbContext>(options =>
-            options.UseNpgsql(databaseConnection));
+            options.UseNpgsql(
+                databaseConnection,
+                npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "sentinel")));
 
         services.AddStackExchangeRedisCache(options =>
         {
@@ -40,6 +49,40 @@ public static class DependencyInjection
             };
             return factory.CreateConnectionAsync().GetAwaiter().GetResult();
         });
+
+        services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
+        var jwtOptions = configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>()
+            ?? throw new InvalidOperationException("Jwt configuration section is missing.");
+
+        if (string.IsNullOrWhiteSpace(jwtOptions.SigningKey) || jwtOptions.SigningKey.Length < 32)
+        {
+            throw new InvalidOperationException(
+                "Jwt:SigningKey must be configured and at least 32 characters.");
+        }
+
+        services
+            .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer(options =>
+            {
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidateLifetime = true,
+                    ValidIssuer = jwtOptions.Issuer,
+                    ValidAudience = jwtOptions.Audience,
+                    IssuerSigningKey = new SymmetricSecurityKey(
+                        Encoding.UTF8.GetBytes(jwtOptions.SigningKey)),
+                    ClockSkew = TimeSpan.FromMinutes(1)
+                };
+            });
+
+        services.AddAuthorization();
+
+        services.AddSingleton<PasswordHasher<User>>();
+        services.AddSingleton<IJwtTokenService, JwtTokenService>();
+        services.AddScoped<IAuthService, AuthService>();
 
         services
             .AddHealthChecks()
