@@ -11,6 +11,7 @@ using SentinelFleet.Application.Devices;
 using SentinelFleet.Application.Identity;
 using SentinelFleet.Application.Organizations;
 using SentinelFleet.Application.Security;
+using SentinelFleet.Application.Telemetry;
 using SentinelFleet.Domain.Identity;
 using SentinelFleet.Infrastructure.Assets;
 using SentinelFleet.Infrastructure.Devices;
@@ -18,6 +19,7 @@ using SentinelFleet.Infrastructure.Identity;
 using SentinelFleet.Infrastructure.Organizations;
 using SentinelFleet.Infrastructure.Persistence;
 using SentinelFleet.Infrastructure.Security;
+using SentinelFleet.Infrastructure.Telemetry;
 
 namespace SentinelFleet.Infrastructure;
 
@@ -58,6 +60,13 @@ public static class DependencyInjection
             return factory.CreateConnectionAsync().GetAwaiter().GetResult();
         });
 
+        services.AddSingleton<ITelemetryQueuePublisher, TelemetryQueuePublisher>();
+        services.AddScoped<ITelemetryIngestService, TelemetryIngestService>();
+        services.AddScoped<ITelemetryQueryService, TelemetryQueryService>();
+        services.AddScoped<ITelemetryProcessor, TelemetryProcessor>();
+        services.AddSingleton<IFleetRealtimePublisher, FleetRealtimePublisher>();
+        services.AddHostedService<TelemetryWorker>();
+
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
         var jwtOptions = configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>()
             ?? throw new InvalidOperationException("Jwt configuration section is missing.");
@@ -84,10 +93,27 @@ public static class DependencyInjection
                         Encoding.UTF8.GetBytes(jwtOptions.SigningKey)),
                     ClockSkew = TimeSpan.FromMinutes(1)
                 };
+
+                options.Events = new JwtBearerEvents
+                {
+                    OnMessageReceived = context =>
+                    {
+                        var accessToken = context.Request.Query["access_token"];
+                        var path = context.HttpContext.Request.Path;
+                        if (!string.IsNullOrEmpty(accessToken) &&
+                            path.StartsWithSegments("/hubs"))
+                        {
+                            context.Token = accessToken;
+                        }
+
+                        return Task.CompletedTask;
+                    }
+                };
             });
 
         services.AddAuthorization();
         services.AddHttpContextAccessor();
+        services.AddSignalR();
 
         services.AddSingleton<PasswordHasher<User>>();
         services.AddSingleton<IJwtTokenService, JwtTokenService>();

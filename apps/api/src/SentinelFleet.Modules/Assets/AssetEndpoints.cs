@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using SentinelFleet.Application.Assets;
+using SentinelFleet.Application.Telemetry;
 
 namespace SentinelFleet.Modules.Assets;
 
@@ -25,8 +26,8 @@ public static class AssetEndpoints
         assets.MapGet("/{assetId:guid}", GetAssetAsync);
         assets.MapPatch("/{assetId:guid}", UpdateAssetAsync);
         assets.MapGet("/{assetId:guid}/current-status", GetStatusAsync);
-        assets.MapGet("/{assetId:guid}/telemetry", EmptyListAsync);
-        assets.MapGet("/{assetId:guid}/positions", EmptyListAsync);
+        assets.MapGet("/{assetId:guid}/telemetry", ListTelemetryAsync);
+        assets.MapGet("/{assetId:guid}/positions", ListPositionsAsync);
         assets.MapGet("/{assetId:guid}/incidents", EmptyListAsync);
 
         return endpoints;
@@ -90,7 +91,44 @@ public static class AssetEndpoints
         return ToHttp(result);
     }
 
+    private static async Task<IResult> ListTelemetryAsync(
+        Guid assetId,
+        ITelemetryQueryService telemetry,
+        CancellationToken ct)
+    {
+        var result = await telemetry.ListTelemetryAsync(assetId, cancellationToken: ct);
+        return ToTelemetryHttp(result);
+    }
+
+    private static async Task<IResult> ListPositionsAsync(
+        Guid assetId,
+        ITelemetryQueryService telemetry,
+        CancellationToken ct)
+    {
+        var result = await telemetry.ListPositionsAsync(assetId, cancellationToken: ct);
+        return ToTelemetryHttp(result);
+    }
+
     private static IResult EmptyListAsync() => Results.Ok(Array.Empty<object>());
+
+    private static IResult ToTelemetryHttp<T>(TelemetryResult<T> result)
+    {
+        if (!result.Succeeded)
+        {
+            return result.Error!.Code switch
+            {
+                TelemetryErrorCode.Validation => Results.BadRequest(new { error = result.Error.Message }),
+                TelemetryErrorCode.NotFound => Results.NotFound(new { error = result.Error.Message }),
+                TelemetryErrorCode.Unauthorized => Results.Unauthorized(),
+                TelemetryErrorCode.Forbidden => Results.Json(
+                    new { error = result.Error.Message },
+                    statusCode: StatusCodes.Status403Forbidden),
+                _ => Results.Problem(result.Error.Message)
+            };
+        }
+
+        return Results.Ok(result.Value);
+    }
 
     private static IResult ToHttp<T>(AssetResult<T> result, int successStatus = StatusCodes.Status200OK)
     {

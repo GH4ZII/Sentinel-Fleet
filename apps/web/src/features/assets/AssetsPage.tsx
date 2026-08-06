@@ -1,13 +1,16 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { listAssets } from '../../lib/api'
+import { useFleetPositions } from '../../lib/fleetHub'
 import { AssetsMap } from './AssetsMap'
 
 export function AssetsPage() {
   const query = useQuery({
     queryKey: ['assets'],
     queryFn: listAssets,
+    refetchInterval: 30_000,
   })
+  const { positions, connected } = useFleetPositions()
 
   return (
     <div className="space-y-8">
@@ -16,6 +19,7 @@ export function AssetsPage() {
           <h1 className="text-3xl font-semibold tracking-tight">Assets</h1>
           <p className="mt-1 text-[var(--sf-muted)]">
             Register and track vehicles in your organization.
+            {connected ? ' · Live' : ''}
           </p>
         </div>
         <Link
@@ -35,7 +39,7 @@ export function AssetsPage() {
 
       {query.data && (
         <>
-          <AssetsMap assets={query.data} />
+          <AssetsMap assets={query.data} livePositions={positions} followLive={false} />
           <div className="overflow-hidden rounded-2xl border border-black/5 bg-white/70">
             <table className="w-full text-left text-sm">
               <thead className="border-b border-black/5 text-xs tracking-wide text-[var(--sf-muted)] uppercase">

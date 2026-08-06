@@ -1,10 +1,10 @@
 using System.Security.Cryptography;
-using System.Text;
 using Microsoft.EntityFrameworkCore;
 using SentinelFleet.Application.Assets;
 using SentinelFleet.Application.Security;
 using SentinelFleet.Domain.Assets;
 using SentinelFleet.Domain.Devices;
+using SentinelFleet.Infrastructure.Devices;
 using SentinelFleet.Infrastructure.Persistence;
 
 namespace SentinelFleet.Infrastructure.Assets;
@@ -178,7 +178,7 @@ public sealed class AssetService(
                 ExternalDeviceId = $"dev-{asset.Id:N}"[..20],
                 DeviceType = "gps-tracker",
                 Status = DeviceStatus.Active,
-                ApiKeyHash = HashApiKey(apiKey),
+                ApiKeyHash = DeviceApiKeyHasher.Hash(apiKey),
                 CreatedAt = now
             });
         }
@@ -300,11 +300,5 @@ public sealed class AssetService(
     {
         var bytes = RandomNumberGenerator.GetBytes(32);
         return Convert.ToBase64String(bytes);
-    }
-
-    internal static string HashApiKey(string apiKey)
-    {
-        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(apiKey));
-        return Convert.ToHexString(hash);
     }
 }

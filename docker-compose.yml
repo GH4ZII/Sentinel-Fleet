@@ -86,5 +86,22 @@ services:
       api:
         condition: service_healthy
 
+  simulator:
+    profiles: ["demo"]
+    build:
+      context: ./apps/simulator
+      dockerfile: Dockerfile
+    container_name: sentinel-simulator
+    environment:
+      API_BASE: http://api:8080
+      SF_EMAIL: ${SF_SIM_EMAIL:-simulator@sentinel.local}
+      SF_PASSWORD: ${SF_SIM_PASSWORD:-Simulator123!}
+      SF_ORG_NAME: ${SF_SIM_ORG:-Simulator Fleet AS}
+      SF_VEHICLE_COUNT: ${SF_VEHICLE_COUNT:-20}
+      SF_INTERVAL_SEC: ${SF_INTERVAL_SEC:-3}
+    depends_on:
+      api:
+        condition: service_healthy
+
 volumes:
   postgres_data:

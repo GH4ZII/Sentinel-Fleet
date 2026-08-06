@@ -1,0 +1,5 @@
+# Local simulator state
+devices.json
+.venv/
+__pycache__/
+*.pyc

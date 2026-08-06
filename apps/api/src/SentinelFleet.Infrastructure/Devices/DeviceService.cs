@@ -1,10 +1,8 @@
 using System.Security.Cryptography;
-using System.Text;
 using Microsoft.EntityFrameworkCore;
 using SentinelFleet.Application.Devices;
 using SentinelFleet.Application.Security;
 using SentinelFleet.Domain.Devices;
-using SentinelFleet.Infrastructure.Assets;
 using SentinelFleet.Infrastructure.Persistence;
 
 namespace SentinelFleet.Infrastructure.Devices;
@@ -77,7 +75,7 @@ public sealed class DeviceService(
             DeviceType = request.DeviceType.Trim(),
             Status = DeviceStatus.Active,
             FirmwareVersion = request.FirmwareVersion?.Trim(),
-            ApiKeyHash = AssetService.HashApiKey(apiKey),
+            ApiKeyHash = DeviceApiKeyHasher.Hash(apiKey),
             CreatedAt = DateTimeOffset.UtcNow
         };
 
@@ -165,7 +163,7 @@ public sealed class DeviceService(
         }
 
         var apiKey = GenerateApiKey();
-        device.ApiKeyHash = AssetService.HashApiKey(apiKey);
+        device.ApiKeyHash = DeviceApiKeyHasher.Hash(apiKey);
         await db.SaveChangesAsync(cancellationToken);
 
         return DeviceResult<RotateDeviceKeyResponse>.Success(

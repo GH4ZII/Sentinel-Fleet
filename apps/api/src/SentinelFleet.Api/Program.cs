@@ -4,10 +4,12 @@ using Microsoft.EntityFrameworkCore;
 using Serilog;
 using SentinelFleet.Infrastructure;
 using SentinelFleet.Infrastructure.Persistence;
+using SentinelFleet.Infrastructure.Realtime;
 using SentinelFleet.Modules.Assets;
 using SentinelFleet.Modules.Devices;
 using SentinelFleet.Modules.Identity;
 using SentinelFleet.Modules.Organizations;
+using SentinelFleet.Modules.Telemetry;
 
 Log.Logger = new LoggerConfiguration()
     .WriteTo.Console()
@@ -29,6 +31,8 @@ try
     {
         options.SerializerOptions.Converters.Add(
             new System.Text.Json.Serialization.JsonStringEnumConverter());
+        options.SerializerOptions.PropertyNamingPolicy =
+            System.Text.Json.JsonNamingPolicy.CamelCase;
     });
     builder.Services.AddOpenApi();
 
@@ -44,7 +48,8 @@ try
                     "http://localhost",
                     "http://web")
                 .AllowAnyHeader()
-                .AllowAnyMethod();
+                .AllowAnyMethod()
+                .AllowCredentials();
         });
     });
 
@@ -109,6 +114,8 @@ try
     app.MapOrganizationEndpoints();
     app.MapAssetEndpoints();
     app.MapDeviceEndpoints();
+    app.MapTelemetryEndpoints();
+    app.MapHub<FleetHub>("/hubs/fleet");
 
     app.Run();
 }

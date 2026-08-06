@@ -3,6 +3,7 @@ using SentinelFleet.Domain.Assets;
 using SentinelFleet.Domain.Devices;
 using SentinelFleet.Domain.Identity;
 using SentinelFleet.Domain.Organizations;
+using SentinelFleet.Domain.Telemetry;
 
 namespace SentinelFleet.Infrastructure.Persistence;
 
@@ -22,6 +23,8 @@ public sealed class SentinelFleetDbContext(DbContextOptions<SentinelFleetDbConte
     public DbSet<Asset> Assets => Set<Asset>();
 
     public DbSet<Device> Devices => Set<Device>();
+
+    public DbSet<TelemetryEvent> TelemetryEvents => Set<TelemetryEvent>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

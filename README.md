@@ -66,13 +66,28 @@ npm install
 npm run dev
 ```
 
-Vite serves at http://localhost:5173 and proxies `/api` and `/health` to the API on port `8081`.
+Vite serves at http://localhost:5173 and proxies `/api`, `/health`, and `/hubs` to the API on port `8081`.
+
+### Simulator (Week 3)
+
+```bash
+cd apps/simulator
+python -m venv .venv
+.venv\Scripts\activate          # Windows
+pip install -r requirements.txt
+python simulate.py              # creates 20 vehicles and streams GPS
+```
+
+Or with Docker: `docker compose --profile demo up simulator`
+
+Open the web app, log in as the simulator user (default `simulator@sentinel.local` / `Simulator123!`), and watch the live map.
 
 ## Repository layout
 
 ```text
 apps/api/          ASP.NET Core modular monolith
 apps/web/          React + Vite + TypeScript frontend
+apps/simulator/    Python GPS telemetry simulator
 infrastructure/    Docker init scripts, Terraform, monitoring
 docs/adr/          Architecture Decision Records
 tests/             Unit, integration, and architecture tests
