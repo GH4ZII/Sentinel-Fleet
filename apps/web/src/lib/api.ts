@@ -156,3 +156,106 @@ export async function createAsset(input: {
     body: JSON.stringify({ ...input, createDevice: true }),
   })
 }
+
+export type Coordinate = { longitude: number; latitude: number }
+
+export type PolygonGeometry = {
+  type: string
+  coordinates: number[][][]
+}
+
+export type Geofence = {
+  id: string
+  name: string
+  description: string | null
+  geofenceType: 'Allowed' | 'Restricted' | string
+  isActive: boolean
+  geometry: PolygonGeometry
+  createdAt: string
+  updatedAt: string
+}
+
+export type AssetGeofence = {
+  id: string
+  assetId: string
+  geofenceId: string
+  ruleType: 'Enter' | 'Exit' | 'Both' | string
+  validFrom: string | null
+  validTo: string | null
+}
+
+export type Detection = {
+  id: string
+  assetId: string
+  ruleId: string | null
+  detectionType: string
+  severity: string
+  confidence: number
+  riskContribution: number
+  title: string
+  description: string | null
+  triggeredAt: string
+  sourceEventIds: string | null
+  metadata: string | null
+  incidentId: string | null
+  createdAt: string
+}
+
+export async function listGeofences() {
+  return apiFetch<Geofence[]>('/api/v1/geofences')
+}
+
+export async function getGeofence(geofenceId: string) {
+  return apiFetch<Geofence>(`/api/v1/geofences/${geofenceId}`)
+}
+
+export async function createGeofence(input: {
+  name: string
+  description?: string
+  geofenceType: string
+  coordinates: Coordinate[]
+  isActive?: boolean
+}) {
+  return apiFetch<Geofence>('/api/v1/geofences', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  })
+}
+
+export async function deleteGeofence(geofenceId: string) {
+  return apiFetch<void>(`/api/v1/geofences/${geofenceId}`, { method: 'DELETE' })
+}
+
+export async function listGeofenceAssets(geofenceId: string) {
+  return apiFetch<AssetGeofence[]>(`/api/v1/geofences/${geofenceId}/assets`)
+}
+
+export async function linkGeofenceAsset(
+  geofenceId: string,
+  input: { assetId: string; ruleType?: string },
+) {
+  return apiFetch<AssetGeofence>(`/api/v1/geofences/${geofenceId}/assets`, {
+    method: 'POST',
+    body: JSON.stringify(input),
+  })
+}
+
+export async function unlinkGeofenceAsset(geofenceId: string, assetId: string) {
+  return apiFetch<void>(`/api/v1/geofences/${geofenceId}/assets/${assetId}`, {
+    method: 'DELETE',
+  })
+}
+
+export async function listDetections(params?: {
+  assetId?: string
+  detectionType?: string
+  limit?: number
+}) {
+  const search = new URLSearchParams()
+  if (params?.assetId) search.set('assetId', params.assetId)
+  if (params?.detectionType) search.set('detectionType', params.detectionType)
+  if (params?.limit) search.set('limit', String(params.limit))
+  const qs = search.toString()
+  return apiFetch<Detection[]>(`/api/v1/detections${qs ? `?${qs}` : ''}`)
+}
+

@@ -28,6 +28,12 @@ export function AppShell() {
             <Link to="/assets" className="text-[var(--sf-muted)] hover:text-[var(--sf-ink)]">
               Assets
             </Link>
+            <Link to="/geofences" className="text-[var(--sf-muted)] hover:text-[var(--sf-ink)]">
+              Geofences
+            </Link>
+            <Link to="/detections" className="text-[var(--sf-muted)] hover:text-[var(--sf-ink)]">
+              Detections
+            </Link>
             <Link
               to="/assets/new"
               className="rounded-lg bg-[var(--sf-accent)] px-3 py-1.5 font-medium text-white"

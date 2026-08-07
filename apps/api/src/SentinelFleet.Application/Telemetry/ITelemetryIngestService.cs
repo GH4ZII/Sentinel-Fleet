@@ -45,6 +45,10 @@ public interface IFleetRealtimePublisher
     Task PublishPositionUpdatedAsync(
         PositionUpdatedMessage message,
         CancellationToken cancellationToken = default);
+
+    Task PublishDetectionCreatedAsync(
+        DetectionCreatedMessage message,
+        CancellationToken cancellationToken = default);
 }
 
 /// <summary>Enriched message published to RabbitMQ after device validation.</summary>

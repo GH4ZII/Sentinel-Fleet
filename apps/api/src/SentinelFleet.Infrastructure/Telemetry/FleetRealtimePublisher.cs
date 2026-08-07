@@ -33,4 +33,30 @@ public sealed class FleetRealtimePublisher(
             message.AssetId,
             message.OrganizationId);
     }
+
+    public async Task PublishDetectionCreatedAsync(
+        DetectionCreatedMessage message,
+        CancellationToken cancellationToken = default)
+    {
+        await hubContext.Clients
+            .Group(FleetHub.OrgGroup(message.OrganizationId))
+            .SendAsync(
+                "DetectionCreated",
+                new
+                {
+                    id = message.DetectionId,
+                    assetId = message.AssetId,
+                    detectionType = message.DetectionType,
+                    severity = message.Severity,
+                    title = message.Title,
+                    triggeredAt = message.TriggeredAt
+                },
+                cancellationToken);
+
+        logger.LogDebug(
+            "Pushed DetectionCreated {DetectionId} for asset {AssetId} to org {OrganizationId}",
+            message.DetectionId,
+            message.AssetId,
+            message.OrganizationId);
+    }
 }

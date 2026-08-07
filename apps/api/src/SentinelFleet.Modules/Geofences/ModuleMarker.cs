@@ -1,6 +1,4 @@
 ﻿namespace SentinelFleet.Modules.Geofences;
 
-/// <summary>
-/// Marker type for the Geofences module. Implementation arrives in later weeks.
-/// </summary>
+/// <summary>Marker type for the Geofences module.</summary>
 public static class ModuleMarker;

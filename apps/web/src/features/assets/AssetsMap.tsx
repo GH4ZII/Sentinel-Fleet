@@ -1,21 +1,29 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import * as maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
-import type { Asset } from '../../lib/api'
+import type { Asset, Geofence } from '../../lib/api'
 import type { LivePosition } from '../../lib/fleetHub'
 
 type Props = {
   assets: Asset[]
   livePositions?: Record<string, LivePosition>
+  geofences?: Geofence[]
   className?: string
   followLive?: boolean
 }
 
-export function AssetsMap({ assets, livePositions = {}, className, followLive = true }: Props) {
+export function AssetsMap({
+  assets,
+  livePositions = {},
+  geofences = [],
+  className,
+  followLive = true,
+}: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null)
   const mapRef = useRef<maplibregl.Map | null>(null)
   const markersRef = useRef<Map<string, maplibregl.Marker>>(new Map())
   const fittedRef = useRef(false)
+  const [mapReady, setMapReady] = useState(false)
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return
@@ -39,15 +47,86 @@ export function AssetsMap({ assets, livePositions = {}, className, followLive = 
     })
 
     map.addControl(new maplibregl.NavigationControl(), 'top-right')
+
+    const onReady = () => {
+      if (!map.getSource('geofences')) {
+        map.addSource('geofences', {
+          type: 'geojson',
+          data: { type: 'FeatureCollection', features: [] },
+        })
+        map.addLayer({
+          id: 'geofences-fill',
+          type: 'fill',
+          source: 'geofences',
+          paint: {
+            'fill-color': [
+              'match',
+              ['get', 'geofenceType'],
+              'Restricted',
+              '#9b2c2c',
+              '#1f6b4f',
+            ],
+            'fill-opacity': 0.35,
+          },
+        })
+        map.addLayer({
+          id: 'geofences-outline',
+          type: 'line',
+          source: 'geofences',
+          paint: {
+            'line-color': [
+              'match',
+              ['get', 'geofenceType'],
+              'Restricted',
+              '#9b2c2c',
+              '#1f6b4f',
+            ],
+            'line-width': 3,
+          },
+        })
+      }
+      map.resize()
+      setMapReady(true)
+    }
+
+    if (map.loaded()) onReady()
+    else map.once('load', onReady)
+
     mapRef.current = map
 
     return () => {
       for (const marker of markersRef.current.values()) marker.remove()
       markersRef.current.clear()
+      setMapReady(false)
       map.remove()
       mapRef.current = null
     }
   }, [])
+
+  useEffect(() => {
+    const map = mapRef.current
+    if (!map || !mapReady) return
+    const source = map.getSource('geofences') as maplibregl.GeoJSONSource | undefined
+    if (!source) return
+
+    source.setData({
+      type: 'FeatureCollection',
+      features: geofences
+        .filter((g) => g.geometry?.coordinates?.length)
+        .map((g) => ({
+          type: 'Feature' as const,
+          properties: {
+            id: g.id,
+            name: g.name,
+            geofenceType: g.geofenceType,
+          },
+          geometry: {
+            type: 'Polygon' as const,
+            coordinates: g.geometry.coordinates,
+          },
+        })),
+    })
+  }, [geofences, mapReady])
 
   useEffect(() => {
     const map = mapRef.current

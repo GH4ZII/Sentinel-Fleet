@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { listAssets } from '../../lib/api'
+import { listAssets, listGeofences } from '../../lib/api'
 import { useFleetPositions } from '../../lib/fleetHub'
 import { AssetsMap } from './AssetsMap'
 
@@ -9,6 +9,10 @@ export function AssetsPage() {
     queryKey: ['assets'],
     queryFn: listAssets,
     refetchInterval: 30_000,
+  })
+  const geofencesQuery = useQuery({
+    queryKey: ['geofences'],
+    queryFn: listGeofences,
   })
   const { positions, connected } = useFleetPositions()
 
@@ -39,7 +43,12 @@ export function AssetsPage() {
 
       {query.data && (
         <>
-          <AssetsMap assets={query.data} livePositions={positions} followLive={false} />
+          <AssetsMap
+            assets={query.data}
+            livePositions={positions}
+            geofences={geofencesQuery.data ?? []}
+            followLive={false}
+          />
           <div className="overflow-hidden rounded-2xl border border-black/5 bg-white/70">
             <table className="w-full text-left text-sm">
               <thead className="border-b border-black/5 text-xs tracking-wide text-[var(--sf-muted)] uppercase">

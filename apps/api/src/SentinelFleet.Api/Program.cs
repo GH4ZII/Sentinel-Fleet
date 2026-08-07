@@ -6,9 +6,12 @@ using SentinelFleet.Infrastructure;
 using SentinelFleet.Infrastructure.Persistence;
 using SentinelFleet.Infrastructure.Realtime;
 using SentinelFleet.Modules.Assets;
+using SentinelFleet.Modules.Detections;
 using SentinelFleet.Modules.Devices;
+using SentinelFleet.Modules.Geofences;
 using SentinelFleet.Modules.Identity;
 using SentinelFleet.Modules.Organizations;
+using SentinelFleet.Modules.Rules;
 using SentinelFleet.Modules.Telemetry;
 
 Log.Logger = new LoggerConfiguration()
@@ -115,6 +118,9 @@ try
     app.MapAssetEndpoints();
     app.MapDeviceEndpoints();
     app.MapTelemetryEndpoints();
+    app.MapGeofenceEndpoints();
+    app.MapRuleEndpoints();
+    app.MapDetectionEndpoints();
     app.MapHub<FleetHub>("/hubs/fleet");
 
     app.Run();

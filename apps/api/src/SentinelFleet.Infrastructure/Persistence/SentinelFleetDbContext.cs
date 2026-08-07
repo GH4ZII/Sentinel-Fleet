@@ -1,8 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using SentinelFleet.Domain.Assets;
+using SentinelFleet.Domain.Detections;
 using SentinelFleet.Domain.Devices;
+using SentinelFleet.Domain.Drivers;
+using SentinelFleet.Domain.Geofences;
 using SentinelFleet.Domain.Identity;
 using SentinelFleet.Domain.Organizations;
+using SentinelFleet.Domain.Rules;
 using SentinelFleet.Domain.Telemetry;
 
 namespace SentinelFleet.Infrastructure.Persistence;
@@ -26,10 +30,25 @@ public sealed class SentinelFleetDbContext(DbContextOptions<SentinelFleetDbConte
 
     public DbSet<TelemetryEvent> TelemetryEvents => Set<TelemetryEvent>();
 
+    public DbSet<Geofence> Geofences => Set<Geofence>();
+
+    public DbSet<AssetGeofence> AssetGeofences => Set<AssetGeofence>();
+
+    public DbSet<AssetPresence> AssetPresences => Set<AssetPresence>();
+
+    public DbSet<DetectionRule> DetectionRules => Set<DetectionRule>();
+
+    public DbSet<Detection> Detections => Set<Detection>();
+
+    public DbSet<DriverAssignment> DriverAssignments => Set<DriverAssignment>();
+
+    public DbSet<WorkShift> WorkShifts => Set<WorkShift>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
         modelBuilder.HasDefaultSchema("sentinel");
+        modelBuilder.HasPostgresExtension("postgis");
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(SentinelFleetDbContext).Assembly);
     }
 }

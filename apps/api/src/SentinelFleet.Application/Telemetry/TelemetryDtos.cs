@@ -66,3 +66,12 @@ public sealed record PositionUpdatedMessage(
     double? SpeedKph,
     double? Heading,
     DateTimeOffset RecordedAt);
+
+public sealed record DetectionCreatedMessage(
+    Guid OrganizationId,
+    Guid DetectionId,
+    Guid AssetId,
+    string DetectionType,
+    string Severity,
+    string Title,
+    DateTimeOffset TriggeredAt);

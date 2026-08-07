@@ -4,6 +4,10 @@ import { LoginPage, RegisterPage } from './features/auth/AuthPages'
 import { AssetsPage } from './features/assets/AssetsPage'
 import { NewAssetPage } from './features/assets/NewAssetPage'
 import { AssetDetailPage } from './features/assets/AssetDetailPage'
+import { GeofencesPage } from './features/geofences/GeofencesPage'
+import { NewGeofencePage } from './features/geofences/NewGeofencePage'
+import { GeofenceDetailPage } from './features/geofences/GeofenceDetailPage'
+import { DetectionsPage } from './features/detections/DetectionsPage'
 import { AppShell, RequireAuth } from './layouts/AppShell'
 
 const queryClient = new QueryClient()
@@ -21,6 +25,10 @@ export default function App() {
               <Route path="/assets" element={<AssetsPage />} />
               <Route path="/assets/new" element={<NewAssetPage />} />
               <Route path="/assets/:assetId" element={<AssetDetailPage />} />
+              <Route path="/geofences" element={<GeofencesPage />} />
+              <Route path="/geofences/new" element={<NewGeofencePage />} />
+              <Route path="/geofences/:geofenceId" element={<GeofenceDetailPage />} />
+              <Route path="/detections" element={<DetectionsPage />} />
             </Route>
           </Route>
           <Route path="*" element={<Navigate to="/assets" replace />} />

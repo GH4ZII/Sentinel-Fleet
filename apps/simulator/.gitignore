@@ -1,5 +1,6 @@
 # Local simulator state
 devices.json
+scenario.json
 .venv/
 __pycache__/
 *.pyc

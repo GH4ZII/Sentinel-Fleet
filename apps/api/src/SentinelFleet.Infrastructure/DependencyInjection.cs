@@ -7,17 +7,23 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using RabbitMQ.Client;
 using SentinelFleet.Application.Assets;
+using SentinelFleet.Application.Detections;
 using SentinelFleet.Application.Devices;
+using SentinelFleet.Application.Geofences;
 using SentinelFleet.Application.Identity;
 using SentinelFleet.Application.Organizations;
+using SentinelFleet.Application.Rules;
 using SentinelFleet.Application.Security;
 using SentinelFleet.Application.Telemetry;
 using SentinelFleet.Domain.Identity;
 using SentinelFleet.Infrastructure.Assets;
+using SentinelFleet.Infrastructure.Detections;
 using SentinelFleet.Infrastructure.Devices;
+using SentinelFleet.Infrastructure.Geofences;
 using SentinelFleet.Infrastructure.Identity;
 using SentinelFleet.Infrastructure.Organizations;
 using SentinelFleet.Infrastructure.Persistence;
+using SentinelFleet.Infrastructure.Rules;
 using SentinelFleet.Infrastructure.Security;
 using SentinelFleet.Infrastructure.Telemetry;
 
@@ -41,7 +47,11 @@ public static class DependencyInjection
         services.AddDbContext<SentinelFleetDbContext>(options =>
             options.UseNpgsql(
                 databaseConnection,
-                npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "sentinel")));
+                npgsql =>
+                {
+                    npgsql.MigrationsHistoryTable("__EFMigrationsHistory", "sentinel");
+                    npgsql.UseNetTopologySuite();
+                }));
 
         services.AddStackExchangeRedisCache(options =>
         {
@@ -64,8 +74,14 @@ public static class DependencyInjection
         services.AddScoped<ITelemetryIngestService, TelemetryIngestService>();
         services.AddScoped<ITelemetryQueryService, TelemetryQueryService>();
         services.AddScoped<ITelemetryProcessor, TelemetryProcessor>();
+        services.AddScoped<IRuleEngine, RuleEngine>();
+        services.AddScoped<IGpsOfflineEvaluator, GpsOfflineEvaluator>();
+        services.AddScoped<IGeofenceService, GeofenceService>();
+        services.AddScoped<IDetectionRuleService, DetectionRuleService>();
+        services.AddScoped<IDetectionQueryService, DetectionQueryService>();
         services.AddSingleton<IFleetRealtimePublisher, FleetRealtimePublisher>();
         services.AddHostedService<TelemetryWorker>();
+        services.AddHostedService<GpsOfflineWatcher>();
 
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
         var jwtOptions = configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>()
