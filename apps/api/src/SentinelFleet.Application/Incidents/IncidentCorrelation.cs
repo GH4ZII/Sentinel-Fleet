@@ -24,6 +24,7 @@ public static class IncidentCorrelation
             DetectionRuleType.FuelLoss => IncidentType.FuelAnomaly,
             DetectionRuleType.GpsOffline => IncidentType.GpsAnomaly,
             DetectionRuleType.OutsideWorkHours => IncidentType.UnauthorizedUse,
+            DetectionRuleType.UsageAnomaly => IncidentType.SuspiciousActivity,
             _ => IncidentType.SuspiciousActivity
         };
 

@@ -6,6 +6,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using RabbitMQ.Client;
+using SentinelFleet.Application.Analysis;
+using SentinelFleet.Application.Anomaly;
 using SentinelFleet.Application.Assets;
 using SentinelFleet.Application.Detections;
 using SentinelFleet.Application.Devices;
@@ -17,6 +19,8 @@ using SentinelFleet.Application.Rules;
 using SentinelFleet.Application.Security;
 using SentinelFleet.Application.Telemetry;
 using SentinelFleet.Domain.Identity;
+using SentinelFleet.Infrastructure.Analysis;
+using SentinelFleet.Infrastructure.Anomaly;
 using SentinelFleet.Infrastructure.Assets;
 using SentinelFleet.Infrastructure.Detections;
 using SentinelFleet.Infrastructure.Devices;
@@ -84,12 +88,24 @@ public static class DependencyInjection
         services.AddScoped<IIncidentCorrelator, IncidentCorrelator>();
         services.AddScoped<IRiskScoringService, RiskScoringService>();
         services.AddScoped<IIncidentService, IncidentService>();
+        services.AddScoped<IIncidentAnalysisService, IncidentAnalysisService>();
         services.Configure<AttachmentStorageOptions>(
             configuration.GetSection(AttachmentStorageOptions.SectionName));
         services.AddSingleton<IAttachmentStorage, LocalAttachmentStorage>();
         services.AddSingleton<IFleetRealtimePublisher, FleetRealtimePublisher>();
         services.AddHostedService<TelemetryWorker>();
         services.AddHostedService<GpsOfflineWatcher>();
+
+        services.Configure<AnomalyServiceOptions>(
+            configuration.GetSection(AnomalyServiceOptions.SectionName));
+        var anomalyOptions = configuration.GetSection(AnomalyServiceOptions.SectionName)
+            .Get<AnomalyServiceOptions>() ?? new AnomalyServiceOptions();
+        services.AddHttpClient<IAnomalyServiceClient, AnomalyServiceClient>(client =>
+        {
+            client.BaseAddress = new Uri(anomalyOptions.BaseUrl.TrimEnd('/') + "/");
+            client.Timeout = TimeSpan.FromSeconds(Math.Clamp(anomalyOptions.TimeoutSeconds, 1, 30));
+        });
+        services.AddScoped<IAnomalyEvaluator, AnomalyEvaluator>();
 
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
         var jwtOptions = configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>()

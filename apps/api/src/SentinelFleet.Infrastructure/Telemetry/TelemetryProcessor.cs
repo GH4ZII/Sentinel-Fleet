@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using SentinelFleet.Application.Anomaly;
 using SentinelFleet.Application.Rules;
 using SentinelFleet.Application.Telemetry;
 using SentinelFleet.Domain.Telemetry;
@@ -11,6 +12,7 @@ public sealed class TelemetryProcessor(
     SentinelFleetDbContext db,
     IFleetRealtimePublisher realtimePublisher,
     IRuleEngine ruleEngine,
+    IAnomalyEvaluator anomalyEvaluator,
     ILogger<TelemetryProcessor> logger) : ITelemetryProcessor
 {
     public async Task ProcessAsync(QueuedTelemetryMessage message, CancellationToken cancellationToken = default)
@@ -89,6 +91,19 @@ public sealed class TelemetryProcessor(
             logger.LogError(
                 ex,
                 "Rule engine failed for telemetry event {EventId} asset {AssetId}",
+                message.EventId,
+                message.AssetId);
+        }
+
+        try
+        {
+            await anomalyEvaluator.EvaluateTelemetryAsync(message, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            logger.LogWarning(
+                ex,
+                "Anomaly evaluation failed for telemetry event {EventId} asset {AssetId}",
                 message.EventId,
                 message.AssetId);
         }

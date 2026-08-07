@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using SentinelFleet.Domain.Anomaly;
 using SentinelFleet.Domain.Assets;
 using SentinelFleet.Domain.Audit;
 using SentinelFleet.Domain.Detections;
@@ -57,6 +58,8 @@ public sealed class SentinelFleetDbContext(DbContextOptions<SentinelFleetDbConte
     public DbSet<IncidentAttachment> IncidentAttachments => Set<IncidentAttachment>();
 
     public DbSet<RiskAssessment> RiskAssessments => Set<RiskAssessment>();
+
+    public DbSet<AnomalyAssessment> AnomalyAssessments => Set<AnomalyAssessment>();
 
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
 

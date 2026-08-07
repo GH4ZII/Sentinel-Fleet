@@ -5,6 +5,7 @@ using Serilog;
 using SentinelFleet.Infrastructure;
 using SentinelFleet.Infrastructure.Persistence;
 using SentinelFleet.Infrastructure.Realtime;
+using SentinelFleet.Modules.AIAnalysis;
 using SentinelFleet.Modules.Assets;
 using SentinelFleet.Modules.Detections;
 using SentinelFleet.Modules.Devices;
@@ -123,6 +124,7 @@ try
     app.MapRuleEndpoints();
     app.MapDetectionEndpoints();
     app.MapIncidentEndpoints();
+    app.MapAnalysisEndpoints();
     app.MapHub<FleetHub>("/hubs/fleet");
 
     app.Run();

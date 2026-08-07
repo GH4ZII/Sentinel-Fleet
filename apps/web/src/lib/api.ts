@@ -440,3 +440,141 @@ export function incidentAttachmentUrl(incidentId: string, attachmentId: string) 
   return `${apiBase}/api/v1/incidents/${incidentId}/attachments/${attachmentId}`
 }
 
+export type Citation = {
+  claim: string
+  sourceType: string
+  sourceId: string
+  detail: string | null
+}
+
+export type AnalysisStatement = {
+  kind: string
+  text: string
+  citations: Citation[]
+}
+
+export type IncidentSummaryAnalysis = {
+  summary: string
+  facts: AnalysisStatement[]
+  suspicions: AnalysisStatement[]
+  assumptions: AnalysisStatement[]
+  missingData: string[]
+  citations: Citation[]
+  analystVersion: string
+}
+
+export type RiskExplanation = {
+  riskScore: number
+  riskLevel: string
+  explanation: string
+  factors: AnalysisStatement[]
+  citations: Citation[]
+  analystVersion: string
+}
+
+export type MissingDataAnalysis = {
+  missingData: string[]
+  suggestedActions: string[]
+  citations: Citation[]
+  analystVersion: string
+}
+
+export type SimilarIncident = {
+  incidentId: string
+  title: string
+  incidentType: string
+  riskScore: number
+  status: string
+  detectedAt: string
+  similarity: number
+  reason: string
+}
+
+export type SimilarIncidentsAnalysis = {
+  incidents: SimilarIncident[]
+  citations: Citation[]
+  analystVersion: string
+}
+
+export type IncidentReport = {
+  title: string
+  narrative: string
+  analysis: IncidentSummaryAnalysis
+  risk: RiskExplanation
+  gaps: MissingDataAnalysis
+  similarIncidents: SimilarIncident[]
+  allCitations: Citation[]
+  generatedAt: string
+  analystVersion: string
+}
+
+export type GraphNode = {
+  id: string
+  entityType: string
+  entityId: string
+  label: string
+  subtitle: string | null
+  level: number
+}
+
+export type GraphEdge = {
+  id: string
+  sourceId: string
+  targetId: string
+  relationshipType: string
+}
+
+export type IncidentGraph = {
+  incidentId: string
+  nodes: GraphNode[]
+  edges: GraphEdge[]
+  relationshipTypes: string[]
+}
+
+export async function analyzeIncidentSummary(incidentId: string) {
+  return apiFetch<IncidentSummaryAnalysis>(`/api/v1/incidents/${incidentId}/analysis/summary`, {
+    method: 'POST',
+    body: '{}',
+  })
+}
+
+export async function explainIncidentRisk(incidentId: string) {
+  return apiFetch<RiskExplanation>(`/api/v1/incidents/${incidentId}/analysis/explain-risk`, {
+    method: 'POST',
+    body: '{}',
+  })
+}
+
+export async function getIncidentMissingData(incidentId: string) {
+  return apiFetch<MissingDataAnalysis>(`/api/v1/incidents/${incidentId}/analysis/missing-data`, {
+    method: 'POST',
+    body: '{}',
+  })
+}
+
+export async function getSimilarIncidents(incidentId: string) {
+  return apiFetch<SimilarIncidentsAnalysis>(
+    `/api/v1/incidents/${incidentId}/analysis/similar-incidents`,
+    { method: 'POST', body: '{}' },
+  )
+}
+
+export async function generateIncidentReport(incidentId: string) {
+  return apiFetch<IncidentReport>(`/api/v1/incidents/${incidentId}/analysis/report`, {
+    method: 'POST',
+    body: '{}',
+  })
+}
+
+export async function getIncidentGraph(
+  incidentId: string,
+  params?: { maxLevels?: number; relationshipType?: string },
+) {
+  const search = new URLSearchParams()
+  if (params?.maxLevels) search.set('maxLevels', String(params.maxLevels))
+  if (params?.relationshipType) search.set('relationshipType', params.relationshipType)
+  const qs = search.toString()
+  return apiFetch<IncidentGraph>(`/api/v1/incidents/${incidentId}/graph${qs ? `?${qs}` : ''}`)
+}
+
+

@@ -5,6 +5,7 @@ import {
   addIncidentComment,
   getAccessToken,
   getIncident,
+  getIncidentGraph,
   getIncidentPositions,
   incidentAttachmentUrl,
   listAssets,
@@ -13,19 +14,29 @@ import {
   uploadIncidentAttachment,
 } from '../../lib/api'
 import { ErrorBoundary } from '../../components/ErrorBoundary'
+import { IncidentAnalysisPanel } from './IncidentAnalysisPanel'
+import { IncidentRelationshipGraph } from './IncidentRelationshipGraph'
 
 const IncidentPlaybackMap = lazy(async () => {
   const mod = await import('./IncidentPlaybackMap')
   return { default: mod.IncidentPlaybackMap }
 })
 
-type TabId = 'overview' | 'timeline' | 'playback' | 'relationships' | 'attachments' | 'audit'
+type TabId =
+  | 'overview'
+  | 'timeline'
+  | 'playback'
+  | 'relationships'
+  | 'analysis'
+  | 'attachments'
+  | 'audit'
 
 const tabs: { id: TabId; label: string }[] = [
   { id: 'overview', label: 'Overview' },
   { id: 'timeline', label: 'Timeline' },
   { id: 'playback', label: 'Map playback' },
   { id: 'relationships', label: 'Relationships' },
+  { id: 'analysis', label: 'AI analysis' },
   { id: 'attachments', label: 'Attachments' },
   { id: 'audit', label: 'Audit' },
 ]
@@ -36,6 +47,8 @@ export function IncidentDetailPage() {
   const [tab, setTab] = useState<TabId>('overview')
   const [timelineFilter, setTimelineFilter] = useState<string>('all')
   const [comment, setComment] = useState('')
+  const [relationFilter, setRelationFilter] = useState('all')
+  const [graphLevels, setGraphLevels] = useState(2)
 
   const detailQuery = useQuery({
     queryKey: ['incident', incidentId],
@@ -48,6 +61,12 @@ export function IncidentDetailPage() {
     queryKey: ['incident-positions', incidentId],
     queryFn: () => getIncidentPositions(incidentId),
     enabled: Boolean(incidentId) && tab === 'playback',
+  })
+
+  const graphQuery = useQuery({
+    queryKey: ['incident-graph', incidentId, graphLevels],
+    queryFn: () => getIncidentGraph(incidentId, { maxLevels: graphLevels }),
+    enabled: Boolean(incidentId) && tab === 'relationships',
   })
 
   const assetsQuery = useQuery({ queryKey: ['assets'], queryFn: listAssets })
@@ -375,42 +394,76 @@ export function IncidentDetailPage() {
       )}
 
       {tab === 'relationships' && (
-        <div className="overflow-hidden rounded-2xl border border-black/5 bg-white/70">
-          <table className="w-full text-left text-sm">
-            <thead className="border-b border-black/5 text-xs uppercase text-[var(--sf-muted)]">
-              <tr>
-                <th className="px-4 py-3">Type</th>
-                <th className="px-4 py-3">Entity</th>
-                <th className="px-4 py-3">Relationship</th>
-                <th className="px-4 py-3">First seen</th>
-                <th className="px-4 py-3">Last seen</th>
-              </tr>
-            </thead>
-            <tbody>
-              {detail.relationships.map((r) => (
-                <tr key={r.id} className="border-t border-black/5">
-                  <td className="px-4 py-3">{r.entityType}</td>
-                  <td className="px-4 py-3 font-mono text-xs">{r.entityId}</td>
-                  <td className="px-4 py-3">{r.relationshipType}</td>
-                  <td className="px-4 py-3 text-[var(--sf-muted)]">
-                    {new Date(r.firstObservedAt).toLocaleString()}
-                  </td>
-                  <td className="px-4 py-3 text-[var(--sf-muted)]">
-                    {new Date(r.lastObservedAt).toLocaleString()}
-                  </td>
-                </tr>
-              ))}
-              {detail.relationships.length === 0 && (
+        <div className="space-y-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <label className="text-sm text-[var(--sf-muted)]">
+              Levels
+              <select
+                className="ml-2 rounded-lg border border-black/10 bg-white px-2 py-1"
+                value={graphLevels}
+                onChange={(e) => setGraphLevels(Number(e.target.value))}
+              >
+                <option value={1}>1</option>
+                <option value={2}>2</option>
+                <option value={3}>3</option>
+              </select>
+            </label>
+          </div>
+          {graphQuery.isLoading && <p className="text-[var(--sf-muted)]">Loading graph…</p>}
+          {graphQuery.isError && (
+            <p className="text-[var(--sf-danger)]">
+              {graphQuery.error instanceof Error
+                ? graphQuery.error.message
+                : 'Failed to load relationship graph'}
+            </p>
+          )}
+          {graphQuery.data && (
+            <IncidentRelationshipGraph
+              graph={graphQuery.data}
+              relationshipFilter={relationFilter}
+              onFilterChange={setRelationFilter}
+            />
+          )}
+
+          <div className="overflow-hidden rounded-2xl border border-black/5 bg-white/70">
+            <table className="w-full text-left text-sm">
+              <thead className="border-b border-black/5 text-xs uppercase text-[var(--sf-muted)]">
                 <tr>
-                  <td colSpan={5} className="px-4 py-6 text-[var(--sf-muted)]">
-                    No related entities yet.
-                  </td>
+                  <th className="px-4 py-3">Type</th>
+                  <th className="px-4 py-3">Entity</th>
+                  <th className="px-4 py-3">Relationship</th>
+                  <th className="px-4 py-3">First seen</th>
+                  <th className="px-4 py-3">Last seen</th>
                 </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {detail.relationships.map((r) => (
+                  <tr key={r.id} className="border-t border-black/5">
+                    <td className="px-4 py-3">{r.entityType}</td>
+                    <td className="px-4 py-3 font-mono text-xs">{r.entityId}</td>
+                    <td className="px-4 py-3">{r.relationshipType}</td>
+                    <td className="px-4 py-3 text-[var(--sf-muted)]">
+                      {new Date(r.firstObservedAt).toLocaleString()}
+                    </td>
+                    <td className="px-4 py-3 text-[var(--sf-muted)]">
+                      {new Date(r.lastObservedAt).toLocaleString()}
+                    </td>
+                  </tr>
+                ))}
+                {detail.relationships.length === 0 && (
+                  <tr>
+                    <td colSpan={5} className="px-4 py-6 text-[var(--sf-muted)]">
+                      No related entities yet.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
+
+      {tab === 'analysis' && <IncidentAnalysisPanel incidentId={incidentId} />}
 
       {tab === 'attachments' && (
         <div className="space-y-4">

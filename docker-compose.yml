@@ -60,6 +60,8 @@ services:
       Jwt__AccessTokenMinutes: ${Jwt__AccessTokenMinutes:-15}
       Jwt__RefreshTokenDays: ${Jwt__RefreshTokenDays:-7}
       AttachmentStorage__RootPath: /data/attachments
+      AnomalyService__BaseUrl: http://anomaly-service:8090
+      AnomalyService__TimeoutSeconds: "5"
     ports:
       - "${API_PORT:-8080}:8080"
     volumes:
@@ -71,12 +73,33 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+      anomaly-service:
+        condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://localhost:8080/health/live || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 10
       start_period: 20s
+
+  anomaly-service:
+    build:
+      context: ./apps/anomaly-service
+      dockerfile: Dockerfile
+    container_name: sentinel-anomaly
+    environment:
+      MODEL_DIR: /data/models
+      PORT: "8090"
+    ports:
+      - "${ANOMALY_PORT:-8090}:8090"
+    volumes:
+      - anomaly_model_data:/data/models
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8090/health/live')\""]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
 
   web:
     build:
@@ -109,3 +132,4 @@ services:
 volumes:
   postgres_data:
   attachment_data:
+  anomaly_model_data:

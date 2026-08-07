@@ -7,5 +7,6 @@ public enum DetectionRuleType
     OutsideWorkHours = 2,
     GpsOffline = 3,
     UnauthorizedUser = 4,
-    FuelLoss = 5
+    FuelLoss = 5,
+    UsageAnomaly = 6
 }

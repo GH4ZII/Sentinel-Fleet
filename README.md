@@ -34,6 +34,7 @@ docker compose up --build
 | API                  | http://localhost:8081        |
 | API health           | http://localhost:8081/health |
 | API readiness        | http://localhost:8081/health/ready |
+| Anomaly service      | http://localhost:8090/health |
 | RabbitMQ management  | http://localhost:15673       |
 
 Default RabbitMQ credentials: `sentinel` / `sentinel`.
@@ -85,12 +86,13 @@ Open the web app, log in as the simulator user (default `simulator@sentinel.loca
 ## Repository layout
 
 ```text
-apps/api/          ASP.NET Core modular monolith
-apps/web/          React + Vite + TypeScript frontend
-apps/simulator/    Python GPS telemetry simulator
-infrastructure/    Docker init scripts, Terraform, monitoring
-docs/adr/          Architecture Decision Records
-tests/             Unit, integration, and architecture tests
+apps/api/               ASP.NET Core modular monolith
+apps/web/               React + Vite + TypeScript frontend
+apps/simulator/         Python GPS telemetry simulator
+apps/anomaly-service/   Python anomaly scoring (baseline + Isolation Forest)
+infrastructure/         Docker init scripts, Terraform, monitoring
+docs/adr/               Architecture Decision Records
+tests/                  Unit, integration, and architecture tests
 ```
 
 ## Technologies
@@ -102,6 +104,7 @@ tests/             Unit, integration, and architecture tests
 ### Backend
 
 * ASP.NET Core, Entity Framework Core, PostgreSQL, PostGIS, RabbitMQ, Redis
+* Python FastAPI anomaly service (scikit-learn)
 
 ### Infrastructure
 
