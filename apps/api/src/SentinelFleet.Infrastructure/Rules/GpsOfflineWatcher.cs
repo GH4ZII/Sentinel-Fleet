@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using SentinelFleet.Application.Incidents;
 using SentinelFleet.Application.Rules;
 using SentinelFleet.Application.Telemetry;
 using SentinelFleet.Domain.Detections;
@@ -49,6 +50,7 @@ public sealed class GpsOfflineWatcher(
 public sealed class GpsOfflineEvaluator(
     SentinelFleetDbContext db,
     IDetectionRuleService ruleService,
+    IIncidentCorrelator incidentCorrelator,
     IFleetRealtimePublisher realtimePublisher,
     ILogger<GpsOfflineEvaluator> logger) : IGpsOfflineEvaluator
 {
@@ -147,6 +149,8 @@ public sealed class GpsOfflineEvaluator(
 
                 db.Detections.Add(detection);
                 await db.SaveChangesAsync(cancellationToken);
+
+                await incidentCorrelator.CorrelateAsync([detection], cancellationToken);
 
                 await realtimePublisher.PublishDetectionCreatedAsync(
                     new DetectionCreatedMessage(

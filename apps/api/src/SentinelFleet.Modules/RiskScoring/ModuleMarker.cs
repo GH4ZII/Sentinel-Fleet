@@ -1,6 +1,4 @@
 ﻿namespace SentinelFleet.Modules.RiskScoring;
 
-/// <summary>
-/// Marker type for the RiskScoring module. Implementation arrives in later weeks.
-/// </summary>
+/// <summary>Marker for RiskScoring module. Scoring lives in Application/Infrastructure (Week 5).</summary>
 public static class ModuleMarker;

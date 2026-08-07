@@ -21,5 +21,11 @@ public sealed class DetectionConfiguration : IEntityTypeConfiguration<Detection>
         builder.HasIndex(d => d.OrganizationId);
         builder.HasIndex(d => new { d.OrganizationId, d.TriggeredAt });
         builder.HasIndex(d => new { d.AssetId, d.DetectionType, d.TriggeredAt });
+        builder.HasIndex(d => d.IncidentId);
+
+        builder.HasOne<SentinelFleet.Domain.Incidents.Incident>()
+            .WithMany()
+            .HasForeignKey(d => d.IncidentId)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }

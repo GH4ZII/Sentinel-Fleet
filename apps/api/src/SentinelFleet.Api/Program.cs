@@ -10,6 +10,7 @@ using SentinelFleet.Modules.Detections;
 using SentinelFleet.Modules.Devices;
 using SentinelFleet.Modules.Geofences;
 using SentinelFleet.Modules.Identity;
+using SentinelFleet.Modules.Incidents;
 using SentinelFleet.Modules.Organizations;
 using SentinelFleet.Modules.Rules;
 using SentinelFleet.Modules.Telemetry;
@@ -121,6 +122,7 @@ try
     app.MapGeofenceEndpoints();
     app.MapRuleEndpoints();
     app.MapDetectionEndpoints();
+    app.MapIncidentEndpoints();
     app.MapHub<FleetHub>("/hubs/fleet");
 
     app.Run();

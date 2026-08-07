@@ -75,3 +75,13 @@ public sealed record DetectionCreatedMessage(
     string Severity,
     string Title,
     DateTimeOffset TriggeredAt);
+
+public sealed record IncidentRealtimeMessage(
+    Guid OrganizationId,
+    Guid IncidentId,
+    Guid AssetId,
+    string Title,
+    string Status,
+    int RiskScore,
+    string Severity,
+    DateTimeOffset UpdatedAt);

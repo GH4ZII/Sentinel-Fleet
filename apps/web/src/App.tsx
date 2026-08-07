@@ -8,6 +8,8 @@ import { GeofencesPage } from './features/geofences/GeofencesPage'
 import { NewGeofencePage } from './features/geofences/NewGeofencePage'
 import { GeofenceDetailPage } from './features/geofences/GeofenceDetailPage'
 import { DetectionsPage } from './features/detections/DetectionsPage'
+import { IncidentsPage } from './features/incidents/IncidentsPage'
+import { IncidentDetailPage } from './features/incidents/IncidentDetailPage'
 import { AppShell, RequireAuth } from './layouts/AppShell'
 
 const queryClient = new QueryClient()
@@ -29,6 +31,8 @@ export default function App() {
               <Route path="/geofences/new" element={<NewGeofencePage />} />
               <Route path="/geofences/:geofenceId" element={<GeofenceDetailPage />} />
               <Route path="/detections" element={<DetectionsPage />} />
+              <Route path="/incidents" element={<IncidentsPage />} />
+              <Route path="/incidents/:incidentId" element={<IncidentDetailPage />} />
             </Route>
           </Route>
           <Route path="*" element={<Navigate to="/assets" replace />} />

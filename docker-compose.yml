@@ -59,8 +59,11 @@ services:
       Jwt__SigningKey: ${Jwt__SigningKey:-CHANGE_ME_local_dev_signing_key_min_32_chars!}
       Jwt__AccessTokenMinutes: ${Jwt__AccessTokenMinutes:-15}
       Jwt__RefreshTokenDays: ${Jwt__RefreshTokenDays:-7}
+      AttachmentStorage__RootPath: /data/attachments
     ports:
       - "${API_PORT:-8080}:8080"
+    volumes:
+      - attachment_data:/data/attachments
     depends_on:
       postgres:
         condition: service_healthy
@@ -105,3 +108,4 @@ services:
 
 volumes:
   postgres_data:
+  attachment_data:

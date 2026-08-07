@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using SentinelFleet.Application.Assets;
+using SentinelFleet.Application.Incidents;
 using SentinelFleet.Application.Telemetry;
 
 namespace SentinelFleet.Modules.Assets;
@@ -28,7 +29,7 @@ public static class AssetEndpoints
         assets.MapGet("/{assetId:guid}/current-status", GetStatusAsync);
         assets.MapGet("/{assetId:guid}/telemetry", ListTelemetryAsync);
         assets.MapGet("/{assetId:guid}/positions", ListPositionsAsync);
-        assets.MapGet("/{assetId:guid}/incidents", EmptyListAsync);
+        assets.MapGet("/{assetId:guid}/incidents", ListIncidentsAsync);
 
         return endpoints;
     }
@@ -109,7 +110,32 @@ public static class AssetEndpoints
         return ToTelemetryHttp(result);
     }
 
-    private static IResult EmptyListAsync() => Results.Ok(Array.Empty<object>());
+    private static async Task<IResult> ListIncidentsAsync(
+        Guid assetId,
+        IIncidentService incidents,
+        CancellationToken ct)
+    {
+        var result = await incidents.ListAsync(assetId, limit: 100, cancellationToken: ct);
+        return ToIncidentHttp(result);
+    }
+
+    private static IResult ToIncidentHttp<T>(IncidentResult<T> result)
+    {
+        if (!result.Succeeded)
+        {
+            return result.Error!.Code switch
+            {
+                IncidentErrorCode.Validation => Results.BadRequest(new { error = result.Error.Message }),
+                IncidentErrorCode.NotFound => Results.NotFound(new { error = result.Error.Message }),
+                IncidentErrorCode.Forbidden => Results.Json(
+                    new { error = result.Error.Message },
+                    statusCode: StatusCodes.Status403Forbidden),
+                _ => Results.Problem(result.Error.Message)
+            };
+        }
+
+        return Results.Ok(result.Value);
+    }
 
     private static IResult ToTelemetryHttp<T>(TelemetryResult<T> result)
     {

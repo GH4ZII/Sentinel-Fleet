@@ -59,4 +59,47 @@ public sealed class FleetRealtimePublisher(
             message.AssetId,
             message.OrganizationId);
     }
+
+    public async Task PublishIncidentCreatedAsync(
+        IncidentRealtimeMessage message,
+        CancellationToken cancellationToken = default)
+    {
+        await PublishIncidentEventAsync("IncidentCreated", message, cancellationToken);
+    }
+
+    public async Task PublishIncidentUpdatedAsync(
+        IncidentRealtimeMessage message,
+        CancellationToken cancellationToken = default)
+    {
+        await PublishIncidentEventAsync("IncidentUpdated", message, cancellationToken);
+    }
+
+    private async Task PublishIncidentEventAsync(
+        string eventName,
+        IncidentRealtimeMessage message,
+        CancellationToken cancellationToken)
+    {
+        await hubContext.Clients
+            .Group(FleetHub.OrgGroup(message.OrganizationId))
+            .SendAsync(
+                eventName,
+                new
+                {
+                    id = message.IncidentId,
+                    assetId = message.AssetId,
+                    title = message.Title,
+                    status = message.Status,
+                    riskScore = message.RiskScore,
+                    severity = message.Severity,
+                    updatedAt = message.UpdatedAt
+                },
+                cancellationToken);
+
+        logger.LogDebug(
+            "Pushed {EventName} {IncidentId} for asset {AssetId} to org {OrganizationId}",
+            eventName,
+            message.IncidentId,
+            message.AssetId,
+            message.OrganizationId);
+    }
 }

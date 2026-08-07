@@ -259,3 +259,184 @@ export async function listDetections(params?: {
   return apiFetch<Detection[]>(`/api/v1/detections${qs ? `?${qs}` : ''}`)
 }
 
+export type Incident = {
+  id: string
+  primaryAssetId: string
+  title: string
+  description: string | null
+  incidentType: string
+  status: string
+  severity: string
+  riskScore: number
+  confidence: number
+  startedAt: string
+  endedAt: string | null
+  detectedAt: string
+  assignedToUserId: string | null
+  createdAt: string
+  updatedAt: string
+  detectionCount: number
+  latestRisk: RiskAssessment | null
+}
+
+export type RiskAssessment = {
+  id: string
+  score: number
+  riskLevel: string
+  factors: string
+  modelVersion: string
+  calculatedAt: string
+}
+
+export type IncidentTimelineEntry = {
+  id: string
+  entryType: string
+  timestamp: string
+  title: string
+  description: string | null
+  sourceType: string | null
+  sourceId: string | null
+  latitude: number | null
+  longitude: number | null
+  metadata: string | null
+  createdByUserId: string | null
+  createdAt: string
+}
+
+export type IncidentEntity = {
+  id: string
+  entityType: string
+  entityId: string
+  relationshipType: string
+  firstObservedAt: string
+  lastObservedAt: string
+  metadata: string | null
+}
+
+export type IncidentComment = {
+  id: string
+  userId: string
+  content: string
+  createdAt: string
+  updatedAt: string
+}
+
+export type IncidentAttachment = {
+  id: string
+  uploadedByUserId: string
+  name: string
+  contentType: string
+  size: number
+  createdAt: string
+}
+
+export type IncidentPosition = {
+  eventId: string
+  latitude: number
+  longitude: number
+  speedKph: number | null
+  heading: number | null
+  recordedAt: string
+}
+
+export type DetectionSummary = {
+  id: string
+  detectionType: string
+  severity: string
+  riskContribution: number
+  title: string
+  description: string | null
+  triggeredAt: string
+  metadata: string | null
+}
+
+export type AuditLog = {
+  id: string
+  userId: string | null
+  action: string
+  entityType: string
+  entityId: string
+  oldValues: string | null
+  newValues: string | null
+  ipAddress: string | null
+  createdAt: string
+}
+
+export type IncidentDetail = {
+  incident: Incident
+  detections: DetectionSummary[]
+  timeline: IncidentTimelineEntry[]
+  relationships: IncidentEntity[]
+  comments: IncidentComment[]
+  attachments: IncidentAttachment[]
+  audit: AuditLog[]
+}
+
+export async function listIncidents(params?: {
+  assetId?: string
+  status?: string
+  limit?: number
+}) {
+  const search = new URLSearchParams()
+  if (params?.assetId) search.set('assetId', params.assetId)
+  if (params?.status) search.set('status', params.status)
+  if (params?.limit) search.set('limit', String(params.limit))
+  const qs = search.toString()
+  return apiFetch<Incident[]>(`/api/v1/incidents${qs ? `?${qs}` : ''}`)
+}
+
+export async function getIncident(incidentId: string) {
+  return apiFetch<IncidentDetail>(`/api/v1/incidents/${incidentId}`)
+}
+
+export async function getIncidentPositions(incidentId: string) {
+  return apiFetch<IncidentPosition[]>(`/api/v1/incidents/${incidentId}/positions`)
+}
+
+export async function updateIncident(
+  incidentId: string,
+  input: { status?: string; title?: string; description?: string },
+) {
+  return apiFetch<Incident>(`/api/v1/incidents/${incidentId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(input),
+  })
+}
+
+export async function resolveIncident(incidentId: string, resolutionNote?: string) {
+  return apiFetch<Incident>(`/api/v1/incidents/${incidentId}/resolve`, {
+    method: 'POST',
+    body: JSON.stringify({ resolutionNote: resolutionNote ?? null }),
+  })
+}
+
+export async function addIncidentComment(incidentId: string, content: string) {
+  return apiFetch<IncidentComment>(`/api/v1/incidents/${incidentId}/comments`, {
+    method: 'POST',
+    body: JSON.stringify({ content }),
+  })
+}
+
+export async function uploadIncidentAttachment(incidentId: string, file: File) {
+  const headers = new Headers()
+  const token = getAccessToken()
+  if (token) headers.set('Authorization', `Bearer ${token}`)
+
+  const form = new FormData()
+  form.append('file', file)
+
+  const response = await fetch(`${apiBase}/api/v1/incidents/${incidentId}/attachments`, {
+    method: 'POST',
+    headers,
+    body: form,
+  })
+  if (!response.ok) {
+    throw new Error(await parseError(response))
+  }
+  return response.json() as Promise<IncidentAttachment>
+}
+
+export function incidentAttachmentUrl(incidentId: string, attachmentId: string) {
+  return `${apiBase}/api/v1/incidents/${incidentId}/attachments/${attachmentId}`
+}
+

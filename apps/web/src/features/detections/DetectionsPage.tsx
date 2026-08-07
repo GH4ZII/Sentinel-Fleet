@@ -75,12 +75,13 @@ export function DetectionsPage() {
                 <th className="px-4 py-3 font-medium">Asset</th>
                 <th className="px-4 py-3 font-medium">Type</th>
                 <th className="px-4 py-3 font-medium">Severity</th>
+                <th className="px-4 py-3 font-medium">Incident</th>
               </tr>
             </thead>
             <tbody>
               {rows.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-4 py-8 text-[var(--sf-muted)]">
+                  <td colSpan={6} className="px-4 py-8 text-[var(--sf-muted)]">
                     No detections yet. Run the geofence exit scenario to trigger an alarm.
                   </td>
                 </tr>
@@ -101,6 +102,18 @@ export function DetectionsPage() {
                   </td>
                   <td className="px-4 py-3 text-[var(--sf-muted)]">{d.detectionType}</td>
                   <td className="px-4 py-3">{d.severity}</td>
+                  <td className="px-4 py-3">
+                    {d.incidentId ? (
+                      <Link
+                        to={`/incidents/${d.incidentId}`}
+                        className="text-[var(--sf-accent)] hover:underline"
+                      >
+                        Open
+                      </Link>
+                    ) : (
+                      <span className="text-[var(--sf-muted)]">—</span>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>

@@ -1,6 +1,4 @@
 ﻿namespace SentinelFleet.Modules.Audit;
 
-/// <summary>
-/// Marker type for the Audit module. Implementation arrives in later weeks.
-/// </summary>
+/// <summary>Marker for Audit module. AuditLog persistence and writes are in Infrastructure (Week 5).</summary>
 public static class ModuleMarker;

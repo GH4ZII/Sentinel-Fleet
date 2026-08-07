@@ -11,6 +11,7 @@ using SentinelFleet.Application.Detections;
 using SentinelFleet.Application.Devices;
 using SentinelFleet.Application.Geofences;
 using SentinelFleet.Application.Identity;
+using SentinelFleet.Application.Incidents;
 using SentinelFleet.Application.Organizations;
 using SentinelFleet.Application.Rules;
 using SentinelFleet.Application.Security;
@@ -21,6 +22,7 @@ using SentinelFleet.Infrastructure.Detections;
 using SentinelFleet.Infrastructure.Devices;
 using SentinelFleet.Infrastructure.Geofences;
 using SentinelFleet.Infrastructure.Identity;
+using SentinelFleet.Infrastructure.Incidents;
 using SentinelFleet.Infrastructure.Organizations;
 using SentinelFleet.Infrastructure.Persistence;
 using SentinelFleet.Infrastructure.Rules;
@@ -79,6 +81,12 @@ public static class DependencyInjection
         services.AddScoped<IGeofenceService, GeofenceService>();
         services.AddScoped<IDetectionRuleService, DetectionRuleService>();
         services.AddScoped<IDetectionQueryService, DetectionQueryService>();
+        services.AddScoped<IIncidentCorrelator, IncidentCorrelator>();
+        services.AddScoped<IRiskScoringService, RiskScoringService>();
+        services.AddScoped<IIncidentService, IncidentService>();
+        services.Configure<AttachmentStorageOptions>(
+            configuration.GetSection(AttachmentStorageOptions.SectionName));
+        services.AddSingleton<IAttachmentStorage, LocalAttachmentStorage>();
         services.AddSingleton<IFleetRealtimePublisher, FleetRealtimePublisher>();
         services.AddHostedService<TelemetryWorker>();
         services.AddHostedService<GpsOfflineWatcher>();

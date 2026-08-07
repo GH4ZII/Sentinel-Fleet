@@ -2,6 +2,7 @@ using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using NetTopologySuite.Geometries;
+using SentinelFleet.Application.Incidents;
 using SentinelFleet.Application.Rules;
 using SentinelFleet.Application.Telemetry;
 using SentinelFleet.Domain.Detections;
@@ -15,6 +16,7 @@ namespace SentinelFleet.Infrastructure.Rules;
 public sealed class RuleEngine(
     SentinelFleetDbContext db,
     IDetectionRuleService ruleService,
+    IIncidentCorrelator incidentCorrelator,
     IFleetRealtimePublisher realtimePublisher,
     ILogger<RuleEngine> logger) : IRuleEngine
 {
@@ -87,6 +89,8 @@ public sealed class RuleEngine(
         {
             return [];
         }
+
+        await incidentCorrelator.CorrelateAsync(created, cancellationToken);
 
         foreach (var detection in created)
         {

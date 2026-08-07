@@ -1,10 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using SentinelFleet.Domain.Assets;
+using SentinelFleet.Domain.Audit;
 using SentinelFleet.Domain.Detections;
 using SentinelFleet.Domain.Devices;
 using SentinelFleet.Domain.Drivers;
 using SentinelFleet.Domain.Geofences;
 using SentinelFleet.Domain.Identity;
+using SentinelFleet.Domain.Incidents;
 using SentinelFleet.Domain.Organizations;
 using SentinelFleet.Domain.Rules;
 using SentinelFleet.Domain.Telemetry;
@@ -43,6 +45,20 @@ public sealed class SentinelFleetDbContext(DbContextOptions<SentinelFleetDbConte
     public DbSet<DriverAssignment> DriverAssignments => Set<DriverAssignment>();
 
     public DbSet<WorkShift> WorkShifts => Set<WorkShift>();
+
+    public DbSet<Incident> Incidents => Set<Incident>();
+
+    public DbSet<IncidentTimelineEntry> IncidentTimelineEntries => Set<IncidentTimelineEntry>();
+
+    public DbSet<IncidentEntity> IncidentEntities => Set<IncidentEntity>();
+
+    public DbSet<IncidentComment> IncidentComments => Set<IncidentComment>();
+
+    public DbSet<IncidentAttachment> IncidentAttachments => Set<IncidentAttachment>();
+
+    public DbSet<RiskAssessment> RiskAssessments => Set<RiskAssessment>();
+
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

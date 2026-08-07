@@ -25,6 +25,16 @@ export type LiveDetection = {
   triggeredAt: string
 }
 
+export type LiveIncident = {
+  id: string
+  assetId: string
+  title: string
+  status: string
+  riskScore: number
+  severity: string
+  updatedAt: string
+}
+
 const hubBase = import.meta.env.VITE_API_BASE_URL ?? ''
 
 function createHubConnection() {
@@ -140,4 +150,55 @@ export function useLiveDetections(limit = 20) {
   }, [limit])
 
   return { detections, latest, connected, dismissLatest: () => setLatest(null) }
+}
+
+export function useLiveIncidents(limit = 20) {
+  const [incidents, setIncidents] = useState<LiveIncident[]>([])
+  const [connected, setConnected] = useState(false)
+  const [latest, setLatest] = useState<LiveIncident | null>(null)
+
+  useEffect(() => {
+    const token = getAccessToken()
+    if (!token) return
+
+    let connection: HubConnection | null = null
+    let cancelled = false
+
+    const upsert = (payload: LiveIncident) => {
+      if (!payload?.id) return
+      setLatest(payload)
+      setIncidents((prev) => {
+        const without = prev.filter((i) => i.id !== payload.id)
+        return [payload, ...without].slice(0, limit)
+      })
+    }
+
+    const start = async () => {
+      connection = createHubConnection()
+      connection.on('IncidentCreated', upsert)
+      connection.on('IncidentUpdated', upsert)
+      connection.onreconnected(() => setConnected(true))
+      connection.onclose(() => setConnected(false))
+
+      try {
+        await connection.start()
+        if (!cancelled) setConnected(true)
+      } catch (err) {
+        console.warn('SignalR connect failed', err)
+        if (!cancelled) setConnected(false)
+      }
+    }
+
+    void start()
+
+    return () => {
+      cancelled = true
+      setConnected(false)
+      if (connection && connection.state !== HubConnectionState.Disconnected) {
+        void connection.stop()
+      }
+    }
+  }, [limit])
+
+  return { incidents, latest, connected, dismissLatest: () => setLatest(null) }
 }
