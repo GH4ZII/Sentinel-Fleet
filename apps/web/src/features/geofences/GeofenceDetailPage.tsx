@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import {
+  deleteGeofence,
   getGeofence,
   linkGeofenceAsset,
   listAssets,
@@ -12,6 +13,7 @@ import { useState } from 'react'
 
 export function GeofenceDetailPage() {
   const { geofenceId = '' } = useParams()
+  const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [assetId, setAssetId] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -51,6 +53,15 @@ export function GeofenceDetailPage() {
     },
   })
 
+  const deleteMutation = useMutation({
+    mutationFn: () => deleteGeofence(geofenceId),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['geofences'] })
+      navigate('/geofences')
+    },
+    onError: (err: Error) => setError(err.message),
+  })
+
   if (geofenceQuery.isLoading) {
     return <p className="text-[var(--sf-muted)]">Loading…</p>
   }
@@ -69,18 +80,37 @@ export function GeofenceDetailPage() {
   const linkedIds = new Set((linksQuery.data ?? []).map((l) => l.assetId))
   const availableAssets = (assetsQuery.data ?? []).filter((a) => !linkedIds.has(a.id))
 
+  function handleDelete() {
+    if (!window.confirm(`Delete geofence “${geofence.name}”? This cannot be undone.`)) {
+      return
+    }
+    deleteMutation.mutate()
+  }
+
   return (
     <div className="space-y-8">
-      <div>
-        <Link to="/geofences" className="text-sm text-[var(--sf-muted)] hover:text-[var(--sf-ink)]">
-          ← Geofences
-        </Link>
-        <h1 className="mt-2 text-3xl font-semibold tracking-tight">{geofence.name}</h1>
-        <p className="mt-1 text-[var(--sf-muted)]">
-          {geofence.geofenceType}
-          {geofence.description ? ` · ${geofence.description}` : ''}
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <Link to="/geofences" className="text-sm text-[var(--sf-muted)] hover:text-[var(--sf-ink)]">
+            ← Geofences
+          </Link>
+          <h1 className="mt-2 text-3xl font-semibold tracking-tight">{geofence.name}</h1>
+          <p className="mt-1 text-[var(--sf-muted)]">
+            {geofence.geofenceType}
+            {geofence.description ? ` · ${geofence.description}` : ''}
+          </p>
+        </div>
+        <button
+          type="button"
+          className="rounded-xl border border-[var(--sf-danger)]/40 px-4 py-2 text-sm font-medium text-[var(--sf-danger)] hover:bg-[#fdf2f2] disabled:opacity-60"
+          disabled={deleteMutation.isPending}
+          onClick={handleDelete}
+        >
+          {deleteMutation.isPending ? 'Deleting…' : 'Delete geofence'}
+        </button>
       </div>
+
+      {error && <p className="text-sm text-[var(--sf-danger)]">{error}</p>}
 
       <GeofenceMap geofences={[geofence]} />
 
@@ -111,7 +141,6 @@ export function GeofenceDetailPage() {
             Link asset
           </button>
         </div>
-        {error && <p className="text-sm text-[var(--sf-danger)]">{error}</p>}
 
         <ul className="divide-y divide-black/5 text-sm">
           {(linksQuery.data ?? []).length === 0 && (

@@ -1,13 +1,28 @@
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { listGeofences } from '../../lib/api'
+import { deleteGeofence, listGeofences } from '../../lib/api'
 import { GeofenceMap } from './GeofenceMap'
 
 export function GeofencesPage() {
+  const queryClient = useQueryClient()
   const query = useQuery({
     queryKey: ['geofences'],
     queryFn: listGeofences,
   })
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteGeofence(id),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['geofences'] })
+    },
+  })
+
+  function handleDelete(id: string, name: string) {
+    if (!window.confirm(`Delete geofence “${name}”? This cannot be undone.`)) {
+      return
+    }
+    deleteMutation.mutate(id)
+  }
 
   return (
     <div className="space-y-8">
@@ -33,6 +48,14 @@ export function GeofencesPage() {
         </p>
       )}
 
+      {deleteMutation.isError && (
+        <p className="text-[var(--sf-danger)]">
+          {deleteMutation.error instanceof Error
+            ? deleteMutation.error.message
+            : 'Failed to delete geofence'}
+        </p>
+      )}
+
       {query.data && (
         <>
           <GeofenceMap geofences={query.data} />
@@ -43,12 +66,13 @@ export function GeofencesPage() {
                   <th className="px-4 py-3 font-medium">Name</th>
                   <th className="px-4 py-3 font-medium">Type</th>
                   <th className="px-4 py-3 font-medium">Active</th>
+                  <th className="px-4 py-3 font-medium" />
                 </tr>
               </thead>
               <tbody>
                 {query.data.length === 0 && (
                   <tr>
-                    <td colSpan={3} className="px-4 py-8 text-[var(--sf-muted)]">
+                    <td colSpan={4} className="px-4 py-8 text-[var(--sf-muted)]">
                       No geofences yet. Draw your first area.
                     </td>
                   </tr>
@@ -65,6 +89,16 @@ export function GeofencesPage() {
                     </td>
                     <td className="px-4 py-3 text-[var(--sf-muted)]">{g.geofenceType}</td>
                     <td className="px-4 py-3">{g.isActive ? 'Yes' : 'No'}</td>
+                    <td className="px-4 py-3 text-right">
+                      <button
+                        type="button"
+                        className="text-[var(--sf-danger)] hover:underline disabled:opacity-60"
+                        disabled={deleteMutation.isPending}
+                        onClick={() => handleDelete(g.id, g.name)}
+                      >
+                        Delete
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
