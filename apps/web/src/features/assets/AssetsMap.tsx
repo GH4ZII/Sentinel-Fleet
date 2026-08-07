@@ -3,6 +3,7 @@ import * as maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import type { Asset, Geofence } from '../../lib/api'
 import type { LivePosition } from '../../lib/fleetHub'
+import { MapPolygonOverlay } from '../maps/MapPolygonOverlay'
 
 type Props = {
   assets: Asset[]
@@ -23,12 +24,12 @@ export function AssetsMap({
   const mapRef = useRef<maplibregl.Map | null>(null)
   const markersRef = useRef<Map<string, maplibregl.Marker>>(new Map())
   const fittedRef = useRef(false)
-  const [mapReady, setMapReady] = useState(false)
+  const [map, setMap] = useState<maplibregl.Map | null>(null)
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return
 
-    const map = new maplibregl.Map({
+    const instance = new maplibregl.Map({
       container: containerRef.current,
       style: {
         version: 8,
@@ -46,91 +47,27 @@ export function AssetsMap({
       zoom: 11,
     })
 
-    map.addControl(new maplibregl.NavigationControl(), 'top-right')
+    instance.addControl(new maplibregl.NavigationControl(), 'top-right')
+    instance.on('load', () => {
+      instance.resize()
+      setMap(instance)
+    })
 
-    const onReady = () => {
-      if (!map.getSource('geofences')) {
-        map.addSource('geofences', {
-          type: 'geojson',
-          data: { type: 'FeatureCollection', features: [] },
-        })
-        map.addLayer({
-          id: 'geofences-fill',
-          type: 'fill',
-          source: 'geofences',
-          paint: {
-            'fill-color': [
-              'match',
-              ['get', 'geofenceType'],
-              'Restricted',
-              '#9b2c2c',
-              '#1f6b4f',
-            ],
-            'fill-opacity': 0.35,
-          },
-        })
-        map.addLayer({
-          id: 'geofences-outline',
-          type: 'line',
-          source: 'geofences',
-          paint: {
-            'line-color': [
-              'match',
-              ['get', 'geofenceType'],
-              'Restricted',
-              '#9b2c2c',
-              '#1f6b4f',
-            ],
-            'line-width': 3,
-          },
-        })
-      }
-      map.resize()
-      setMapReady(true)
-    }
-
-    if (map.loaded()) onReady()
-    else map.once('load', onReady)
-
-    mapRef.current = map
+    mapRef.current = instance
+    requestAnimationFrame(() => instance.resize())
 
     return () => {
       for (const marker of markersRef.current.values()) marker.remove()
       markersRef.current.clear()
-      setMapReady(false)
-      map.remove()
+      setMap(null)
+      instance.remove()
       mapRef.current = null
     }
   }, [])
 
   useEffect(() => {
-    const map = mapRef.current
-    if (!map || !mapReady) return
-    const source = map.getSource('geofences') as maplibregl.GeoJSONSource | undefined
-    if (!source) return
-
-    source.setData({
-      type: 'FeatureCollection',
-      features: geofences
-        .filter((g) => g.geometry?.coordinates?.length)
-        .map((g) => ({
-          type: 'Feature' as const,
-          properties: {
-            id: g.id,
-            name: g.name,
-            geofenceType: g.geofenceType,
-          },
-          geometry: {
-            type: 'Polygon' as const,
-            coordinates: g.geometry.coordinates,
-          },
-        })),
-    })
-  }, [geofences, mapReady])
-
-  useEffect(() => {
-    const map = mapRef.current
-    if (!map) return
+    const instance = mapRef.current
+    if (!instance) return
 
     const seen = new Set<string>()
 
@@ -154,7 +91,7 @@ export function AssetsMap({
               `<strong>${escapeHtml(asset.name)}</strong><br/><span>${escapeHtml(asset.status)}</span>`,
             ),
           )
-          .addTo(map)
+          .addTo(instance)
         markersRef.current.set(asset.id, marker)
       } else {
         marker.setLngLat([lng, lat])
@@ -178,18 +115,18 @@ export function AssetsMap({
       }
 
       if (coords.length === 1) {
-        map.flyTo({ center: coords[0], zoom: 13 })
+        instance.flyTo({ center: coords[0], zoom: 13 })
       } else if (coords.length > 1) {
         const bounds = new maplibregl.LngLatBounds(coords[0], coords[0])
         for (const c of coords) bounds.extend(c)
-        map.fitBounds(bounds, { padding: 48, maxZoom: 13 })
+        instance.fitBounds(bounds, { padding: 48, maxZoom: 13 })
       }
       fittedRef.current = true
     } else if (followLive && seen.size === 1) {
       const onlyId = [...seen][0]
       const live = livePositions[onlyId]
       if (live) {
-        map.easeTo({
+        instance.easeTo({
           center: [live.longitude, live.latitude],
           duration: 500,
         })
@@ -199,9 +136,11 @@ export function AssetsMap({
 
   return (
     <div
-      ref={containerRef}
-      className={className ?? 'h-80 w-full overflow-hidden rounded-2xl border border-black/5'}
-    />
+      className={`relative overflow-hidden ${className ?? 'h-80 w-full rounded-2xl border border-black/5'}`}
+    >
+      <div ref={containerRef} className="absolute inset-0 h-full w-full" />
+      <MapPolygonOverlay map={map} geofences={geofences} />
+    </div>
   )
 }
 

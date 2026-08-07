@@ -24,6 +24,9 @@ export function AssetsPage() {
           <p className="mt-1 text-[var(--sf-muted)]">
             Register and track vehicles in your organization.
             {connected ? ' · Live' : ''}
+            {(geofencesQuery.data?.length ?? 0) > 0
+              ? ` · ${geofencesQuery.data!.length} geofence${geofencesQuery.data!.length === 1 ? '' : 's'} on map`
+              : ''}
           </p>
         </div>
         <Link
