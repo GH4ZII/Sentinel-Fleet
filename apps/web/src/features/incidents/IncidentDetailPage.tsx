@@ -1,4 +1,4 @@
-import { FormEvent, useMemo, useState } from 'react'
+import { lazy, Suspense, useMemo, useState, type FormEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
@@ -12,7 +12,12 @@ import {
   updateIncident,
   uploadIncidentAttachment,
 } from '../../lib/api'
-import { IncidentPlaybackMap } from './IncidentPlaybackMap'
+import { ErrorBoundary } from '../../components/ErrorBoundary'
+
+const IncidentPlaybackMap = lazy(async () => {
+  const mod = await import('./IncidentPlaybackMap')
+  return { default: mod.IncidentPlaybackMap }
+})
 
 type TabId = 'overview' | 'timeline' | 'playback' | 'relationships' | 'attachments' | 'audit'
 
@@ -84,18 +89,14 @@ export function IncidentDetailPage() {
   const incident = detail?.incident
   const assetName =
     assetsQuery.data?.find((a) => a.id === incident?.primaryAssetId)?.name ??
-    incident?.primaryAssetId.slice(0, 8)
+    incident?.primaryAssetId?.slice(0, 8)
 
   const factors = useMemo(() => {
     const raw = incident?.latestRisk?.factors
     if (!raw) return [] as { code: string; label: string; points: number; explanation: string }[]
     try {
-      return JSON.parse(raw) as {
-        code: string
-        label: string
-        points: number
-        explanation: string
-      }[]
+      const parsed = JSON.parse(raw) as unknown
+      return Array.isArray(parsed) ? parsed : []
     } catch {
       return []
     }
@@ -353,13 +354,22 @@ export function IncidentDetailPage() {
             <p className="text-[var(--sf-muted)]">Loading positions…</p>
           )}
           {positionsQuery.isError && (
-            <p className="text-[var(--sf-danger)]">Failed to load positions</p>
+            <p className="text-[var(--sf-danger)]">
+              {positionsQuery.error instanceof Error
+                ? positionsQuery.error.message
+                : 'Failed to load positions'}
+            </p>
           )}
           {positionsQuery.data && (
-            <IncidentPlaybackMap
-              positions={positionsQuery.data}
-              timeline={detail.timeline}
-            />
+            <ErrorBoundary fallbackTitle="Map playback failed">
+              <Suspense fallback={<p className="text-[var(--sf-muted)]">Loading map…</p>}>
+                <IncidentPlaybackMap
+                  key={incidentId}
+                  positions={positionsQuery.data}
+                  timeline={detail.timeline}
+                />
+              </Suspense>
+            </ErrorBoundary>
           )}
         </div>
       )}

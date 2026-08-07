@@ -11,6 +11,7 @@ import { DetectionsPage } from './features/detections/DetectionsPage'
 import { IncidentsPage } from './features/incidents/IncidentsPage'
 import { IncidentDetailPage } from './features/incidents/IncidentDetailPage'
 import { AppShell, RequireAuth } from './layouts/AppShell'
+import { ErrorBoundary } from './components/ErrorBoundary'
 
 const queryClient = new QueryClient()
 
@@ -32,7 +33,14 @@ export default function App() {
               <Route path="/geofences/:geofenceId" element={<GeofenceDetailPage />} />
               <Route path="/detections" element={<DetectionsPage />} />
               <Route path="/incidents" element={<IncidentsPage />} />
-              <Route path="/incidents/:incidentId" element={<IncidentDetailPage />} />
+              <Route
+                path="/incidents/:incidentId"
+                element={
+                  <ErrorBoundary fallbackTitle="Incident page crashed">
+                    <IncidentDetailPage />
+                  </ErrorBoundary>
+                }
+              />
             </Route>
           </Route>
           <Route path="*" element={<Navigate to="/assets" replace />} />
