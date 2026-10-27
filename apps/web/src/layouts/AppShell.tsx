@@ -24,9 +24,12 @@ export function AppShell() {
           <Link to="/assets" className="text-lg font-semibold tracking-tight text-[var(--sf-ink)]">
             Sentinel Fleet
           </Link>
-          <nav className="flex items-center gap-4 text-sm">
+          <nav className="flex flex-wrap items-center gap-4 text-sm">
             <Link to="/assets" className="text-[var(--sf-muted)] hover:text-[var(--sf-ink)]">
               Assets
+            </Link>
+            <Link to="/devices" className="text-[var(--sf-muted)] hover:text-[var(--sf-ink)]">
+              Devices
             </Link>
             <Link to="/geofences" className="text-[var(--sf-muted)] hover:text-[var(--sf-ink)]">
               Geofences
@@ -36,6 +39,9 @@ export function AppShell() {
             </Link>
             <Link to="/incidents" className="text-[var(--sf-muted)] hover:text-[var(--sf-ink)]">
               Incidents
+            </Link>
+            <Link to="/settings/organization" className="text-[var(--sf-muted)] hover:text-[var(--sf-ink)]">
+              Settings
             </Link>
             <Link
               to="/assets/new"

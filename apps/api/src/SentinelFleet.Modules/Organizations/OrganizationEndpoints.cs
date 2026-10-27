@@ -17,6 +17,14 @@ public static class OrganizationEndpoints
         group.MapPatch("/current", UpdateCurrentAsync);
         group.MapGet("/current/members", ListMembersAsync);
         group.MapPatch("/current/members/{memberId:guid}", UpdateMemberAsync);
+        group.MapPost("/current/invitations", CreateInvitationAsync);
+
+        var invitations = endpoints.MapGroup("/api/v1/invitations")
+            .WithTags("Invitations")
+            .AllowAnonymous();
+
+        invitations.MapGet("/{token}", GetInvitationAsync);
+        invitations.MapPost("/{token}/accept", AcceptInvitationAsync);
 
         return endpoints;
     }
@@ -56,14 +64,44 @@ public static class OrganizationEndpoints
         return ToHttp(result);
     }
 
-    private static IResult ToHttp<T>(OrganizationResult<T> result)
+    private static async Task<IResult> CreateInvitationAsync(
+        CreateInvitationRequest request,
+        IInvitationService service,
+        CancellationToken cancellationToken)
+    {
+        var result = await service.CreateAsync(request, cancellationToken);
+        return ToHttp(result, StatusCodes.Status201Created);
+    }
+
+    private static async Task<IResult> GetInvitationAsync(
+        string token,
+        IInvitationService service,
+        CancellationToken cancellationToken)
+    {
+        var result = await service.GetAsync(token, cancellationToken);
+        return ToHttp(result);
+    }
+
+    private static async Task<IResult> AcceptInvitationAsync(
+        string token,
+        AcceptInvitationRequest request,
+        IInvitationService service,
+        CancellationToken cancellationToken)
+    {
+        var result = await service.AcceptAsync(token, request, cancellationToken);
+        return ToHttp(result);
+    }
+
+    private static IResult ToHttp<T>(OrganizationResult<T> result, int successStatus = StatusCodes.Status200OK)
     {
         if (!result.Succeeded)
         {
             return MapError(result.Error!);
         }
 
-        return Results.Ok(result.Value);
+        return successStatus == StatusCodes.Status201Created
+            ? Results.Created("/api/v1/organizations/current/invitations", result.Value)
+            : Results.Ok(result.Value);
     }
 
     private static IResult MapError(OrganizationError error) => error.Code switch

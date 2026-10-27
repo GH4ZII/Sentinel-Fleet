@@ -49,7 +49,7 @@ skal starte hele utviklingsmiljøet.
 
 ## Uke 2 – Organisasjoner, brukere og eiendeler
 
-**Status:** ferdig (devices-UI og org-admin-UI mangler)
+**Status:** ferdig
 
 Mål:
 
@@ -70,8 +70,8 @@ Oppgaver:
 - [x] Asset-register
 - [x] Asset-detaljside
 - [x] Enkle kartmarkører
-- [ ] Devices-UI
-- [ ] Org-/brukeradministrasjon i frontend
+- [x] Devices-UI
+- [x] Org-/brukeradministrasjon i frontend
 
 Leveranse:
 
@@ -435,7 +435,5 @@ Gjenstående UI-gaps som kan tas underveis:
 
 ```text
 Rules UI (/rules)
-Devices UI
 Dashboard
-Org-/brukeradministrasjon
 ```

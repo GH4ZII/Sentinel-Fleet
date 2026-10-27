@@ -6,8 +6,8 @@
 - [x] Multi-tenant dataisolering
 - [x] Asset-register og asset-detalj (API + UI)
 - [x] Device API (opprettelse, nøkkelrotasjon)
-- [ ] Devices-UI / administrasjonssider
-- [ ] Org-/rolle-administrasjon i frontend
+- [x] Devices-UI / administrasjonssider
+- [x] Org-/rolle-administrasjon i frontend
 - [x] Telemetridatastrøm (simulerte data)
 
 ---

@@ -160,6 +160,7 @@ public static class DependencyInjection
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IOrganizationContext, OrganizationContext>();
         services.AddScoped<IOrganizationService, OrganizationService>();
+        services.AddScoped<IInvitationService, InvitationService>();
         services.AddScoped<IAssetService, AssetService>();
         services.AddScoped<IDeviceService, DeviceService>();
 

@@ -25,6 +25,8 @@ public sealed class SentinelFleetDbContext(DbContextOptions<SentinelFleetDbConte
 
     public DbSet<Membership> Memberships => Set<Membership>();
 
+    public DbSet<Invitation> Invitations => Set<Invitation>();
+
     public DbSet<AssetType> AssetTypes => Set<AssetType>();
 
     public DbSet<Asset> Assets => Set<Asset>();

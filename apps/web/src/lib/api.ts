@@ -157,6 +157,170 @@ export async function createAsset(input: {
   })
 }
 
+export async function getMe() {
+  return apiFetch<User>('/api/v1/auth/me')
+}
+
+export function canMutate(role: string | null | undefined) {
+  return role === 'Owner' || role === 'SecurityManager'
+}
+
+export function isOwner(role: string | null | undefined) {
+  return role === 'Owner'
+}
+
+export type Device = {
+  id: string
+  assetId: string | null
+  externalDeviceId: string
+  deviceType: string
+  status: string
+  lastSeenAt: string | null
+  firmwareVersion: string | null
+  createdAt: string
+}
+
+export type CreateDeviceResponse = {
+  device: Device
+  apiKey: string
+}
+
+export type RotateDeviceKeyResponse = {
+  deviceId: string
+  apiKey: string
+}
+
+export async function listDevices() {
+  return apiFetch<Device[]>('/api/v1/devices')
+}
+
+export async function getDevice(deviceId: string) {
+  return apiFetch<Device>(`/api/v1/devices/${deviceId}`)
+}
+
+export async function createDevice(input: {
+  assetId?: string | null
+  externalDeviceId: string
+  deviceType: string
+  firmwareVersion?: string
+}) {
+  return apiFetch<CreateDeviceResponse>('/api/v1/devices', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  })
+}
+
+export async function updateDevice(
+  deviceId: string,
+  input: {
+    assetId?: string | null
+    deviceType?: string
+    status?: string
+    firmwareVersion?: string | null
+  },
+) {
+  return apiFetch<Device>(`/api/v1/devices/${deviceId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(input),
+  })
+}
+
+export async function rotateDeviceKey(deviceId: string) {
+  return apiFetch<RotateDeviceKeyResponse>(`/api/v1/devices/${deviceId}/rotate-key`, {
+    method: 'POST',
+  })
+}
+
+export type Organization = {
+  id: string
+  name: string
+  organizationNumber: string | null
+  createdAt: string
+  settings: string
+}
+
+export type Member = {
+  id: string
+  userId: string
+  email: string
+  firstName: string
+  lastName: string
+  role: string
+  status: string
+  createdAt: string
+}
+
+export type InvitationCreated = {
+  invitationId: string
+  email: string
+  role: string
+  token: string
+  expiresAt: string
+  acceptUrl: string
+}
+
+export type InvitationInfo = {
+  emailMasked: string
+  organizationName: string
+  role: string
+  expiresAt: string
+}
+
+export async function getCurrentOrganization() {
+  return apiFetch<Organization>('/api/v1/organizations/current')
+}
+
+export async function updateOrganization(input: {
+  name?: string
+  organizationNumber?: string | null
+  settings?: string
+}) {
+  return apiFetch<Organization>('/api/v1/organizations/current', {
+    method: 'PATCH',
+    body: JSON.stringify(input),
+  })
+}
+
+export async function listMembers() {
+  return apiFetch<Member[]>('/api/v1/organizations/current/members')
+}
+
+export async function updateMember(
+  memberId: string,
+  input: { role?: string; status?: string },
+) {
+  return apiFetch<Member>(`/api/v1/organizations/current/members/${memberId}`, {
+    method: 'PATCH',
+    body: JSON.stringify(input),
+  })
+}
+
+export async function createInvitation(input: { email: string; role: string }) {
+  return apiFetch<InvitationCreated>('/api/v1/organizations/current/invitations', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  })
+}
+
+export async function getInvitation(token: string) {
+  return apiFetch<InvitationInfo>(`/api/v1/invitations/${encodeURIComponent(token)}`)
+}
+
+export async function acceptInvitation(
+  token: string,
+  input: { firstName: string; lastName: string; password: string },
+) {
+  const data = await apiFetch<AuthResponse>(
+    `/api/v1/invitations/${encodeURIComponent(token)}/accept`,
+    {
+      method: 'POST',
+      body: JSON.stringify(input),
+    },
+  )
+  setTokens(data.accessToken, data.refreshToken)
+  return data
+}
+
 export type Coordinate = { longitude: number; latitude: number }
 
 export type PolygonGeometry = {

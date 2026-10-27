@@ -18,15 +18,16 @@
 ### Frontend-sider (§24)
 
 - [x] Innlogging / registrering (`/login`, `/register`)
-- [ ] Accept invitation
+- [x] Accept invitation (`/accept-invitation`)
 - [ ] Dashboard (`/dashboard`)
 - [x] Live-kart (på `/assets`, ikke egen `/live-map`)
 - [x] Eiendeler (`/assets`, `/assets/new`, `/assets/:id`)
+- [x] Devices (`/devices`, `/devices/new`, `/devices/:id`)
 - [ ] Asset history / telemetry undersider
 - [x] Hendelser (`/incidents`, detalj med faner)
 - [x] Geofences
 - [ ] Regler (`/rules`)
-- [ ] Administrasjon / settings
+- [x] Administrasjon / settings (`/settings/organization`, `/settings/users`)
 
 ---
 
