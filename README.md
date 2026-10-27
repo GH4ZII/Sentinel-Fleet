@@ -110,4 +110,4 @@ tests/                  Unit, integration, and architecture tests
 
 * Docker, GitHub Actions, Terraform, OpenTelemetry, Grafana
 
-See [Project_Plan.md](Project_Plan.md) for the full product and delivery plan.
+See [docs/plan/](docs/plan/README.md) for the full product and delivery plan (split from the former `Project_Plan.md`).
