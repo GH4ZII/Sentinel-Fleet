@@ -3,6 +3,7 @@ import * as maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import type { Coordinate, Geofence } from '../../lib/api'
 import { MapPolygonOverlay } from '../maps/MapPolygonOverlay'
+import { MapShell } from '../maps/MapShell'
 
 type Props = {
   geofences?: Geofence[]
@@ -120,15 +121,12 @@ export function GeofenceMap({
   }, [geofences, interactiveDraw])
 
   return (
-    <div
-      className={`relative overflow-hidden ${className ?? 'h-80 w-full rounded-2xl border border-black/5'}`}
-    >
-      <div ref={containerRef} className="absolute inset-0 h-full w-full" />
+    <MapShell map={map} mapContainerRef={containerRef} className={className}>
       <MapPolygonOverlay
         map={map}
         geofences={geofences}
         draftCoordinates={draftCoordinates}
       />
-    </div>
+    </MapShell>
   )
 }

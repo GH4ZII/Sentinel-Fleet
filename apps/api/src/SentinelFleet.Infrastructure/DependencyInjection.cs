@@ -71,9 +71,29 @@ public static class DependencyInjection
             var settings = sp.GetRequiredService<RabbitMqConnectionSettings>();
             var factory = new ConnectionFactory
             {
-                Uri = new Uri(settings.ConnectionString)
+                Uri = new Uri(settings.ConnectionString),
+                AutomaticRecoveryEnabled = true,
+                NetworkRecoveryInterval = TimeSpan.FromSeconds(5),
             };
-            return factory.CreateConnectionAsync().GetAwaiter().GetResult();
+
+            const int maxAttempts = 30;
+            Exception? lastError = null;
+            for (var attempt = 1; attempt <= maxAttempts; attempt++)
+            {
+                try
+                {
+                    return factory.CreateConnectionAsync().GetAwaiter().GetResult();
+                }
+                catch (Exception ex) when (attempt < maxAttempts)
+                {
+                    lastError = ex;
+                    Thread.Sleep(TimeSpan.FromSeconds(2));
+                }
+            }
+
+            throw new InvalidOperationException(
+                $"Could not connect to RabbitMQ after {maxAttempts} attempts.",
+                lastError);
         });
 
         services.AddSingleton<ITelemetryQueuePublisher, TelemetryQueuePublisher>();
