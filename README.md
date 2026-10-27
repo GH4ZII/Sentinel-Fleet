@@ -1,113 +1,51 @@
 # Sentinel Fleet
 
-Sentinel Fleet is an intelligent security and incident-analysis platform for companies that manage vehicles, machinery, trailers, tools, and other mobile equipment.
+<p align="center">
+  <img src="docs/assets/sentinel-fleet-preview.jpg" alt="Sentinel Fleet – live map and incident investigation" width="920" />
+</p>
 
-The platform receives real-time GPS and sensor data and uses it to detect suspicious activity such as:
+**Sentinel Fleet** is a security and investigation platform for companies that manage vehicles, machinery, trailers, tools, and other mobile equipment.
 
-* Vehicles moving outside working hours
-* Geofence violations
-* Unauthorized drivers
-* Sudden GPS signal loss
-* Abnormal fuel loss
-* Odometer manipulation
-* Unusual driving patterns
-* Possible theft or misuse
+Most GPS systems show where assets are. Sentinel Fleet answers what happened — and how serious it is.
 
-When suspicious activity is detected, Sentinel Fleet combines related alerts into a single incident.
+---
 
-## Prerequisites
+## What it does
 
-* Docker Desktop (or Docker Engine + Compose)
-* [.NET 9 SDK](https://dotnet.microsoft.com/download) (for local API development)
-* [Node.js 22+](https://nodejs.org/) (for local web development)
+The platform watches live location and sensor data, then flags suspicious activity such as:
 
-## Quick start
+- Movement outside working hours  
+- Geofence breaches  
+- Unauthorized drivers  
+- Sudden GPS signal loss  
+- Abnormal fuel loss  
+- Unusual driving patterns  
+- Possible theft or misuse  
 
-```bash
-cp .env.example .env
-docker compose up --build
-```
+Related alerts are grouped into a single **incident**, so operators investigate one clear story instead of a flood of alarms.
 
-| Service              | URL                          |
-|----------------------|------------------------------|
-| Web                  | http://localhost:3080        |
-| API                  | http://localhost:8081        |
-| API health           | http://localhost:8081/health |
-| API readiness        | http://localhost:8081/health/ready |
-| Anomaly service      | http://localhost:8090/health |
-| RabbitMQ management  | http://localhost:15673       |
+---
 
-Default RabbitMQ credentials: `sentinel` / `sentinel`.
+## Built for investigation
 
-Host ports are configured in `.env` (see `.env.example`) to avoid clashes with local installs.
+When something looks wrong, Sentinel Fleet helps you reconstruct the event:
 
-## Local development (infra in Docker)
+| | |
+|---|---|
+| **Live map** | See assets in real time, with status and geofences |
+| **Incident playback** | Replay the route and what triggered the alert |
+| **Timeline** | Follow the sequence of events step by step |
+| **Risk score** | Understand severity and what drove the score |
+| **AI analyst** | Get a grounded summary with references to the evidence |
 
-Start only infrastructure:
+---
 
-```bash
-docker compose up postgres redis rabbitmq -d
-```
+## Who it’s for
 
-### API
+Transport, construction, rental, logistics, industrial sites, municipal fleets — anyone responsible for costly mobile assets and the people who use them.
 
-```bash
-cd apps/api
-dotnet run --project src/SentinelFleet.Api
-```
+Typical users: fleet admins, security managers, analysts, and operators.
 
-Uses connection strings from `apps/api/src/SentinelFleet.Api/appsettings.Development.json`
-(localhost ports matching `.env`: Postgres `5433`, Redis `6380`, RabbitMQ `5673`).
+---
 
-### Web
-
-```bash
-cd apps/web
-npm install
-npm run dev
-```
-
-Vite serves at http://localhost:5173 and proxies `/api`, `/health`, and `/hubs` to the API on port `8081`.
-
-### Simulator (Week 3)
-
-```bash
-cd apps/simulator
-python -m venv .venv
-.venv\Scripts\activate          # Windows
-pip install -r requirements.txt
-python simulate.py              # creates 20 vehicles and streams GPS
-```
-
-Or with Docker: `docker compose --profile demo up simulator`
-
-Open the web app, log in as the simulator user (default `simulator@sentinel.local` / `Simulator123!`), and watch the live map.
-
-## Repository layout
-
-```text
-apps/api/               ASP.NET Core modular monolith
-apps/web/               React + Vite + TypeScript frontend
-apps/simulator/         Python GPS telemetry simulator
-apps/anomaly-service/   Python anomaly scoring (baseline + Isolation Forest)
-infrastructure/         Docker init scripts, Terraform, monitoring
-docs/adr/               Architecture Decision Records
-tests/                  Unit, integration, and architecture tests
-```
-
-## Technologies
-
-### Frontend
-
-* React, TypeScript, Vite, Tailwind CSS, MapLibre, SignalR
-
-### Backend
-
-* ASP.NET Core, Entity Framework Core, PostgreSQL, PostGIS, RabbitMQ, Redis
-* Python FastAPI anomaly service (scikit-learn)
-
-### Infrastructure
-
-* Docker, GitHub Actions, Terraform, OpenTelemetry, Grafana
-
-See [docs/plan/](docs/plan/README.md) for the full product and delivery plan (split from the former `Project_Plan.md`).
+<p align="center"><sub>Detect · Correlate · Reconstruct</sub></p>
